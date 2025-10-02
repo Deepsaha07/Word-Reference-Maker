@@ -9,15 +9,15 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="WordRef"/>
   <Description DefaultValue="Cite from BibTeX and auto-build bibliography."/>
-  <IconUrl DefaultValue="https://YOURDOMAIN/wordref/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://YOURDOMAIN/wordref/assets/icon-128.png"/>
-  <SupportUrl DefaultValue="https://YOURDOMAIN/wordref/support"/>
+  <IconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/assets/icon-128.png"/>
+  <SupportUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/support"/>
   <Hosts><Host Name="Document"/></Hosts>
   <Requirements>
     <Sets DefaultMinVersion="1.3"><Set Name="WordApi"/></Sets>
   </Requirements>
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://YOURDOMAIN/wordref/taskpane.html"/>
+    <SourceLocation DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/taskpane.html"/>
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
 
