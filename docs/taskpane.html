@@ -8,6 +8,8 @@
 
   <link rel="stylesheet" href="./taskpane.css" />
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <!-- bundler injects taskpane.js; keep this if your setup requires manual include -->
+  <!-- <script defer src="./taskpane.js"></script> -->
 </head>
 
 <body>
@@ -31,40 +33,24 @@
         <ol>
           <li>Search your paper on <strong>Google Scholar</strong>.</li>
           <li>Click <em>Cite</em>, then choose <em>BibTeX</em>.</li>
-          <li>Copy the BibTeX entry and paste it into the input box.</li>
-          <li>
-            If your cursor is at the right place in Word:
-            <ul><li>Click <strong>Add &amp; Cite</strong> → it inserts immediately.</li></ul>
-            Otherwise:
-            <ul><li>Click <strong>Add</strong> → it saves in your library to cite later.</li></ul>
-          </li>
-          <li>You can add optional notes (page/line and remarks).</li>
-          <li>Re-use items in your library via the <strong>Cite</strong> button beside each result.</li>
-          <li>Duplicates are detected and you’ll get a notification.</li>
-          <li>Change citation style anytime (APA, IEEE, etc.); in-text and bibliography update.</li>
-          <li>Multiple numeric cites: place them adjacent and then merge to <code>[2,3]</code> or <code>[2–3]</code> if needed.</li>
-          <li>Bibliography formatting (font, size, spacing, color, alignment) is adjustable below.</li>
+          <li>Paste the BibTeX below and click <strong>Add</strong> (or <strong>Add &amp; Cite</strong>).</li>
+          <li>Re-use items via the <strong>Cite</strong> button in results.</li>
+          <li>Change citation style anytime; in-text &amp; bibliography update.</li>
+          <li>Format the bibliography (font, size, spacing, alignment, color) below.</li>
         </ol>
       </div>
     </div>
   </div>
 
-  <!-- Toast (single) -->
-  <div id="toast" class="toast" aria-live="polite"></div>
-
   <!-- Main pane -->
   <div class="pane">
-
-    <!-- BibTeX box -->
     <textarea id="bibtexInput" placeholder="Paste BibTeX entry here…"></textarea>
 
-    <!-- Page/Note inputs -->
     <div id="noteInputs">
       <input id="notePage" placeholder="Page / para / line"/>
       <input id="noteText" placeholder="Your note (optional)"/>
     </div>
 
-    <!-- Controls: Add / Add & Cite / Style -->
     <div id="controlsRow">
       <button id="btnAddOnly">Add</button>
       <button id="btnAddCite">Add &amp; Cite</button>
@@ -78,33 +64,42 @@
       </select>
     </div>
 
-    <!-- Style badge -->
     <div class="row" id="styleBadgeRow">
       <span id="styleBadge" class="badge">APA</span>
     </div>
 
-    <!-- Search + results -->
     <input id="search" placeholder="Search author, year, title…"/>
     <div id="results"></div>
 
     <hr/>
 
-    <!-- Actions -->
-    <div class="row">
-      <button id="btnInsertCite">Insert citation</button>
-      <button id="btnUpdateBib">Update bibliography</button>
-    </div>
-
-    <div class="row" style="margin-top:12px">
+    <!-- Row 1: general actions -->
+    <div class="action-row">
       <button id="btnResetNumbering" title="Forget first-cited order only">Reset numbering</button>
       <button id="btnClearLibrary" title="Delete all saved entries">Clear Library</button>
       <button id="btnReload" title="Reload task pane UI">Reload</button>
     </div>
 
-    <!-- Bibliography Format (indented container so title + panel align) -->
+    <!-- Row 2: merge / unmerge (secondary style) -->
+    <div class="action-row-secondary">
+      <button id="btnMergeSelected" class="btn-outline" title="Merge selected citations">
+        Merge citations
+      </button>
+      <button id="btnUnmergeSelected" class="btn-outline" title="Unmerge group citation">
+        Unmerge citations
+      </button>
+    </div>
+
+    <!-- Single accent button: update bibliography -->
+    <div class="single-action-row">
+      <button id="btnUpdateBib" class="btn-accent">
+        Update bibliography
+      </button>
+    </div>
+
+    <!-- Bibliography Format -->
     <section id="bibFormat">
       <div class="section-title">Bibliography Format</div>
-
       <div id="bibFormatRow">
         <div class="form-chunk">
           <label for="bibFont">Font:</label>
@@ -115,17 +110,14 @@
             <option value="Cambria">Cambria</option>
           </select>
         </div>
-
         <div class="form-chunk">
           <label for="bibSize">Size:</label>
           <input id="bibSize" type="number" value="12" min="8" max="24" style="width:4.5em;">
         </div>
-
         <div class="form-chunk">
           <label for="bibSpacing">Line spacing:</label>
           <input id="bibSpacing" type="number" value="14" min="10" max="36" style="width:4.5em;">
         </div>
-
         <div class="form-chunk">
           <label for="bibAlign">Alignment:</label>
           <select id="bibAlign">
@@ -135,7 +127,6 @@
             <option value="Right">Right</option>
           </select>
         </div>
-
         <div class="form-chunk">
           <label for="bibColor">Font color:</label>
           <input id="bibColor" class="swatch" type="color" value="#333333" />
@@ -144,11 +135,55 @@
     </section>
   </div>
 
-  <!-- Inline confirm (kept) -->
+  <!-- Toast -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- Inline confirm -->
   <div id="confirmBar" class="confirm-bar" style="display:none">
     <span id="confirmMsg"></span>
     <button id="confirmYes">Yes</button>
     <button id="confirmNo">Cancel</button>
   </div>
+
+  <!-- Toolbar buttons (Create / Import library) -->
+  <div class="footer-actions">
+    <button id="btnOpenLibPanel">Create library</button>
+    <button id="btnOpenImportPanel">Import library</button>
+  </div>
+
+  <!-- Cited Library panel (read-only, copy-friendly) -->
+  <div id="citedLibPanel" class="sheet hidden">
+    <div class="sheet-head">
+      <div class="sheet-title">Cited BibTeX</div>
+      <div class="sheet-actions">
+        <button id="btnCitedRefresh">Refresh</button>
+        <button id="btnCitedCopy">Copy</button>
+        <button id="btnCitedClose">Close</button>
+      </div>
+    </div>
+    <textarea id="citedBibtexBox" readonly spellcheck="false"></textarea>
+    <div class="hint">
+      This is generated from the citations in your document. Click <b>Copy</b> to use elsewhere.
+    </div>
+  </div>
+
+  <!-- Import Library panel (paste BibTeX, then parse & add) -->
+  <div id="importModal" class="modal-wrap hidden">
+    <div class="modal-backdrop" id="importBackdrop"></div>
+
+    <div class="modal-card">
+      <div class="sheet-head">
+        <div class="sheet-title">Import BibTeX</div>
+        <div class="sheet-actions">
+          <button id="btnImportParse">Parse &amp; Add</button>
+          <button id="btnImportClose">Cancel</button>
+        </div>
+      </div>
+      <textarea id="importBibtexBox" placeholder="@article{...}\n@inproceedings{...}"></textarea>
+      <div class="hint">Paste one or more BibTeX entries. Duplicates are skipped.</div>
+    </div>
+  </div>
+
+  <!-- ===== Dialog mode (when opened as #download-dialog) ===== -->
 </body>
 </html>
