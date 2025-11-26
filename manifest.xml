@@ -15,7 +15,7 @@
 
   <!-- ICONS -->
   <IconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/assets/icon-128.png"/>
+  <HighResolutionIconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/assets/icon-64.png"/>
 
   <!-- SUPPORT PAGE -->
   <SupportUrl DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/main/docs/support.html"/>
