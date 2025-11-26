@@ -14,8 +14,8 @@
   <Description DefaultValue="Paste BibTeX, add notes, insert citations, and auto-build a bibliography."/>
 
   <!-- ICONS -->
-  <IconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/assets/icon-128.png"/>
+  <IconUrl DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-128.png"/>
 
   <!-- SUPPORT PAGE -->
   <SupportUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/support"/>
@@ -31,7 +31,7 @@
   </Requirements>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/taskpane.html"/>
+    <SourceLocation DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/taskpane.html"/>
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>
@@ -85,15 +85,15 @@
 
       <!-- ICONS -->
       <bt:Images>
-        <bt:Image id="icon16" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/assets/icon-16.png"/>
-        <bt:Image id="icon32" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/assets/icon-32.png"/>
-        <bt:Image id="icon80" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/assets/icon-80.png"/>
-        <bt:Image id="icon128" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/assets/icon-128.png"/>
+        <bt:Image id="icon16" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-16.png"/>
+        <bt:Image id="icon32" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-32.png"/>
+        <bt:Image id="icon80" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-80.png"/>
+        <bt:Image id="icon128" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-128.png"/>
       </bt:Images>
 
       <!-- TASKPANE URL -->
       <bt:Urls>
-        <bt:Url id="residTaskPaneUrl" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/taskpane.html"/>
+        <bt:Url id="residTaskPaneUrl" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/taskpane.html"/>
       </bt:Urls>
 
       <!-- TEXT LABELS -->
