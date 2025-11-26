@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xsi:type="TaskPaneApp">
+
+  <Id>2366514C-4D30-4385-889D-41E2FB35DDEA</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>WordRef</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="WordRef - BibTeX paste &amp; cite"/>
+  <Description DefaultValue="Paste BibTeX, add notes, insert citations, and auto-build a bibliography."/>
+  <IconUrl DefaultValue="https://www.contoso.com/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://www.contoso.com/assets/icon-128.png"/>
+  <SupportUrl DefaultValue="https://wordref.example/help"/>
+
+  <!-- Root host for schema 1.1 is Document -->
+  <Hosts>
+    <Host Name="Document"/>
+  </Hosts>
+
+  <!-- Declare Word API requirement -->
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="WordApi" MinVersion="1.1"/>
+    </Sets>
+  </Requirements>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://www.contoso.com/taskpane.html?v=20251027"/>
+
+  </DefaultSettings>
+
+  <Permissions>ReadWriteDocument</Permissions>
+
+  <!-- Ribbon UI: use default overrides namespace + xsi:type -->
+  <VersionOverrides
+      xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides"
+      xsi:type="VersionOverridesV1_0">
+
+    <Hosts>
+      <Host xsi:type="Document">
+        <DesktopFormFactor>
+          <ExtensionPoint xsi:type="PrimaryCommandSurface">
+            <OfficeTab id="TabHome">
+              <Group id="grpWordRef">
+                <Label resid="residGroupLabel"/>
+                <Icon>
+                  <bt:Image size="16" resid="icon16"/>
+                  <bt:Image size="32" resid="icon32"/>
+                  <bt:Image size="80" resid="icon80"/>
+                </Icon>
+
+                <!-- Button: open the task pane -->
+                <Control xsi:type="Button" id="btnShowPane">
+                  <Label resid="residButtonLabel"/>
+                  <Supertip>
+                    <Title resid="residButtonLabel"/>
+                    <Description resid="residButtonTip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="icon16"/>
+                    <bt:Image size="32" resid="icon32"/>
+                    <bt:Image size="80" resid="icon80"/>
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <SourceLocation resid="residTaskPaneUrl"/>
+                  </Action>
+                </Control>
+
+              </Group>
+            </OfficeTab>
+          </ExtensionPoint>
+        </DesktopFormFactor>
+      </Host>
+    </Hosts>
+
+    <Resources>
+      <bt:Images>
+        <bt:Image id="icon16" DefaultValue="https://www.contoso.com/assets/icon-16.png"/>
+        <bt:Image id="icon32" DefaultValue="https://www.contoso.com/assets/icon-32.png"/>
+        <bt:Image id="icon80" DefaultValue="https://www.contoso.com/assets/icon-80.png"/>
+        <bt:Image id="icon128" DefaultValue="https://www.contoso.com/assets/icon-128.png"/>
+      </bt:Images>
+
+      <bt:Urls>
+        <bt:Url id="residTaskPaneUrl" DefaultValue="https://www.contoso.com/taskpane.html?v=20251027"/>
+      </bt:Urls>
+
+      <bt:ShortStrings>
+        <bt:String id="residGroupLabel" DefaultValue="WordRef"/>
+        <bt:String id="residButtonLabel" DefaultValue="Open WordRef"/>
+      </bt:ShortStrings>
+
+      <bt:LongStrings>
+        <bt:String id="residButtonTip" DefaultValue="Open the WordRef task pane."/>
+      </bt:LongStrings>
+    </Resources>
+  </VersionOverrides>
+</OfficeApp>

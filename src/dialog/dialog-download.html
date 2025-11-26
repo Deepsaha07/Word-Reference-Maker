@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Download</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; text-align:center; margin: 24px; }
+    button { padding: 8px 14px; border: 0; border-radius: 6px; background:#0078d4; color:#fff; }
+    #msg { margin-top: 10px; color: #333; }
+  </style>
+</head>
+<body>
+  <h3>Export Library</h3>
+  <button id="btnDownload">Download file</button>
+  <div id="msg"></div>
+
+  <script>
+    let payload = null;
+
+    Office.onReady(() => {
+      Office.context.ui.addHandlerAsync(Office.EventType.DialogMessageReceived, (arg) => {
+        try {
+          payload = JSON.parse(arg.message || "{}");
+          document.getElementById("msg").textContent =
+            `Ready to save “${payload.filename}”. Click Download below.`;
+        } catch (e) {
+          Office.context.ui.messageParent(JSON.stringify({ ok:false, error:String(e) }));
+        }
+      });
+
+      document.getElementById("btnDownload").addEventListener("click", () => {
+        if (!payload) return;
+        try {
+          const blob = new Blob([payload.data], { type: payload.mime || "application/octet-stream" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = payload.filename || "wordref-library.json";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          document.getElementById("msg").textContent = "File saved. Check Downloads folder.";
+          setTimeout(() => Office.context.ui.messageParent(JSON.stringify({ ok:true })), 600);
+        } catch (e) {
+          Office.context.ui.messageParent(JSON.stringify({ ok:false, error:String(e) }));
+        }
+      });
+    });
+  </script>
+</body>
+</html>
