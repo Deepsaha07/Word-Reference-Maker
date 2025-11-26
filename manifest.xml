@@ -14,11 +14,11 @@
   <Description DefaultValue="Paste BibTeX, add notes, insert citations, and auto-build a bibliography."/>
 
   <!-- ICONS -->
-  <IconUrl DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-128.png"/>
+  <IconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/docs/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/assets/icon-128.png"/>
 
   <!-- SUPPORT PAGE -->
-  <SupportUrl DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/support"/>
+  <SupportUrl DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/main/docs/support.html"/>
 
   <Hosts>
     <Host Name="Document"/>
@@ -85,10 +85,10 @@
 
       <!-- ICONS -->
       <bt:Images>
-        <bt:Image id="icon16" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-16.png"/>
-        <bt:Image id="icon32" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-32.png"/>
-        <bt:Image id="icon80" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-80.png"/>
-        <bt:Image id="icon128" DefaultValue="https://github.com/Deepsaha07/Word-Reference-Maker/blob/d28ce8dbf80d6ac8e0d5a5f2a7dd35e7ebf7ee39/docs/assets/icon-128.png"/>
+        <bt:Image id="icon16" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/assets/icon-16.png"/>
+        <bt:Image id="icon32" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/assets/icon-32.png"/>
+        <bt:Image id="icon80" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/assets/icon-80.png"/>
+        <bt:Image id="icon128" DefaultValue="https://deepsaha07.github.io/Word-Reference-Maker/assets/icon-128.png"/>
       </bt:Images>
 
       <!-- TASKPANE URL -->
