@@ -1,0 +1,645 @@
+/* =========================
+   Root + global reset
+   ========================= */
+   :root {
+    --bg:#f5f7fa;
+    --card:#fff;
+    --ink:#222;
+    --muted:#6b7280;
+  
+    --blue-50:#e8f1fb;
+    --blue-100:#d7e8ff;
+    --blue-500:#4a90e2;
+    --blue-600:#357ab7;
+    --blue-700:#1f66a6;
+  
+    --border:#e5e7eb;
+    --border-strong:#d1d5db;
+  
+    --accent:#ffc400;
+  }
+  
+  * {
+    box-sizing:border-box;
+  }
+  
+  html,
+  body {
+    height:100%;
+  }
+  
+  body {
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+  }
+  
+  /* =========================
+     App header
+     ========================= */
+  .app-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin:6px 0 12px;
+    padding-right:1px;
+  }
+  
+  .app-title {
+    margin:0;
+    padding-left:12px;
+    font-size:25px;
+    font-weight:500;
+    background:linear-gradient(90deg,#5e35b1,#9575cd);
+    background-clip:text;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    color:transparent;
+  }
+  
+  .help-wrap {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-right:8px;
+  }
+  
+  .help-icon {
+    width:22px;
+    height:22px;
+    padding:0;
+    border:none;
+    border-radius:50%;
+    background:#5e35b1;
+    color:#fff;
+    font-size:14px;
+    font-style:italic;
+    font-weight:bold;
+    line-height:22px;
+    text-align:center;
+    cursor:pointer;
+    transition:background .2s;
+  }
+  
+  .help-icon:hover {
+    background:#4527a0;
+  }
+  
+  .help-text {
+    font-size:13px;
+    font-weight:500;
+    color:#444;
+    cursor:pointer;
+    user-select:none;
+  }
+  
+  .help-text:hover {
+    text-decoration:underline;
+  }
+  
+  /* =========================
+     Main pane layout
+     ========================= */
+  .pane {
+    max-width:520px;
+    margin:0;
+    padding:16px 16px 28px;
+  }
+  
+  .pane > * {
+    margin-bottom:14px;
+  }
+  
+  /* Badge */
+  .badge {
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+    background:var(--blue-50);
+    color:var(--blue-700);
+    border:1px solid var(--blue-100);
+  }
+  
+  /* =========================
+     Inputs
+     ========================= */
+  textarea#bibtexInput {
+    width:100%;
+    min-height:120px;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--card);
+    resize:vertical;
+    white-space:pre-wrap;
+    word-wrap:break-word;
+  }
+  
+  input,
+  select {
+    padding:7px 10px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--card);
+    font-size:13px;
+    min-width:0;
+    margin-bottom:6px;
+  }
+  
+  #noteInputs {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin:10px 0 6px;
+  }
+  
+  /* Controls row (Add / Add & Cite / Style) */
+  #controlsRow {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin:10px 0 16px;
+  }
+  
+  @media (max-width:420px) {
+    #controlsRow {
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+  }
+  
+  /* =========================
+     Buttons – base style
+     ========================= */
+  button {
+    background:linear-gradient(180deg,var(--blue-500),var(--blue-600));
+    color:#fff;
+    border:none;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
+    transition:box-shadow .15s ease, transform .03s ease;
+    margin-right:6px;
+    margin-bottom:6px;
+  }
+  
+  button:hover {
+    box-shadow:0 2px 6px rgba(0,0,0,.12);
+  }
+  
+  button:active {
+    transform:translateY(1px);
+  }
+  
+  button:disabled {
+    background:#aab4c0;
+    cursor:not-allowed;
+  }
+  
+  /* Outline style (used for Merge / Unmerge) */
+  .btn-outline {
+    background:#fff;
+    color:var(--blue-700);
+    border:1px solid var(--blue-600);
+  }
+  
+  /* Accent button (Update bibliography) */
+  .btn-accent {
+    background:linear-gradient(180deg,#10b981,#059669);
+    color:#fff;
+    border:none;
+  }
+  
+  /* =========================
+     Action button rows
+     ========================= */
+  
+  /* Row 1: Reset / Clear / Reload */
+  .action-row {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+    margin:12px 0 6px;
+  }
+  
+  .action-row button {
+    width:100%;
+    margin-right:0;
+  }
+  
+  /* Row 2: Merge / Unmerge (secondary look) */
+  .action-row-secondary {
+    display:flex;
+    gap:8px;
+    margin:4px 0 8px;
+  }
+  
+  .action-row-secondary button {
+    flex:1;
+    margin-right:0;
+  }
+  
+  /* Row 3: single full-width Update bibliography */
+  .single-action-row {
+    margin:4px 0 10px;
+  }
+  
+  .single-action-row button {
+    width:100%;
+    margin-right:0;
+  }
+  
+  /* Bottom footer: Create / Import library */
+  .footer-actions {
+    max-width:520px;
+    padding:0 16px 16px;
+    margin:0;
+    display:flex;
+    gap:8px;
+    justify-content:center; /* change to flex-start if you prefer left-aligned */
+  }
+  
+  .footer-actions button {
+    flex:1;
+    margin-right:0;
+  }
+  
+  /* =========================
+     Results list
+     ========================= */
+  .item {
+    border:1px solid var(--border);
+    background:var(--card);
+    padding:12px;
+    border-radius:10px;
+    margin-top:10px;
+    transition:box-shadow .2s ease, border-color .2s ease;
+  }
+  
+  .item:hover {
+    box-shadow:0 2px 6px rgba(0,0,0,.08);
+    border-color:var(--border-strong);
+  }
+  
+  .row {
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  
+  .row .grow {
+    flex:1;
+  }
+  
+  .title {
+    font-weight:700;
+    font-size:14px;
+    margin:0 0 2px;
+  }
+  
+  .meta {
+    font-size:12px;
+    color:var(--muted);
+    margin:0 0 4px;
+  }
+  
+  .note {
+    font-size:12px;
+    margin-top:4px;
+    padding-left:6px;
+    border-left:3px solid var(--blue-600);
+    color:#333;
+  }
+  
+  .item.hit-highlight {
+    outline:2px solid rgba(255,196,0,.95);
+    box-shadow:0 0 0 3px rgba(255,196,0,.25);
+    transition:outline-color 600ms ease;
+  }
+  
+  mark {
+    background:#fff49a;
+    padding:0 2px;
+    border-radius:2px;
+  }
+  
+  /* Scrollable results panel (~5 cards) */
+  #results{
+    border:1px solid var(--border);
+    background:var(--card);
+    border-radius:12px;
+    padding:8px;
+    overflow:auto;
+    overscroll-behavior:contain;
+    -webkit-mask-image:linear-gradient(to bottom, black 90%, rgba(0,0,0,.4));
+            mask-image:linear-gradient(to bottom, black 90%, rgba(0,0,0,.4));
+  }
+  
+  #results .item {
+    margin-top:8px;
+  }
+  
+  #results::-webkit-scrollbar {
+    width:10px;
+  }
+  
+  #results::-webkit-scrollbar-track {
+    background:transparent;
+  }
+  
+  #results::-webkit-scrollbar-thumb {
+    background:var(--blue-100);
+    border-radius:8px;
+    border:2px solid transparent;
+    background-clip:padding-box;
+  }
+  
+  /* =========================
+     Bibliography format block
+     ========================= */
+  #bibFormat {
+    margin-top:16px;
+    padding-left:10px;
+    padding-right:8px;
+  }
+  
+  #bibFormatRow {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 10px;
+    align-items:center;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:#f9f9fb;
+    margin-top:8px;
+  }
+  
+  .form-chunk {
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  
+  .form-chunk label {
+    font-size:12px;
+    color:var(--muted);
+  }
+  
+  input[type="color"].swatch {
+    appearance:none;
+    -webkit-appearance:none;
+    width:38px;
+    height:28px;
+    padding:0;
+    border:1px solid var(--border-strong);
+    border-radius:6px;
+    background:#fff;
+    cursor:pointer;
+  }
+  
+  input[type="color"].swatch::-webkit-color-swatch {
+    border:none;
+    border-radius:6px;
+  }
+  
+  input[type="color"].swatch::-webkit-color-swatch-wrapper {
+    padding:0;
+    border-radius:6px;
+  }
+  
+  /* Separators */
+  hr {
+    margin:14px 0;
+    border:none;
+    border-top:1px solid var(--border);
+  }
+  
+  /* =========================
+     Toast
+     ========================= */
+  .toast {
+    position:fixed;
+    bottom:16px;
+    left:50%;
+    transform:translateX(-50%);
+    max-width:82%;
+    background:#1f2937;
+    color:#fff;
+    padding:10px 14px;
+    border-radius:10px;
+    box-shadow:0 6px 30px rgba(0,0,0,.25);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 150ms ease, transform 150ms ease;
+    font-size:13px;
+    z-index:99999;
+  }
+  
+  .toast.show {
+    opacity:1;
+    transform:translateX(-50%) translateY(-6px);
+  }
+  
+  /* =========================
+     Inline confirm bar
+     ========================= */
+  .confirm-bar {
+    position:fixed;
+    left:16px;
+    bottom:16px;
+    background:#fff;
+    border:1px solid var(--border);
+    box-shadow:0 4px 16px rgba(0,0,0,.12);
+    padding:10px;
+    border-radius:10px;
+    z-index:10001;
+    display:none;
+    gap:8px;
+    align-items:center;
+  }
+  
+  .confirm-bar button {
+    padding:6px 10px;
+  }
+  
+  /* =========================
+     Help modal backdrop
+     ========================= */
+  .backdrop {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.25);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+  }
+  
+  .backdrop.show {
+    display:flex;
+  }
+  
+  /* =========================
+     Generic modal
+     ========================= */
+  .modal {
+    background:#fff;
+    border-radius:12px;
+    padding:16px 16px 12px;
+    width:min(620px,92vw);
+    max-height:80vh;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+    overflow:auto;
+    border:1px solid var(--border);
+  }
+  
+  .modal-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:8px;
+  }
+  
+  .modal-title {
+    font-size:16px;
+    font-weight:800;
+  }
+  
+  .modal-close {
+    background:transparent;
+    color:#111;
+    border:none;
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+    padding:4px 6px;
+    border-radius:6px;
+  }
+  
+  .modal-close:hover {
+    background:#f3f4f6;
+  }
+  
+  .modal p {
+    margin:8px 0;
+    font-size:13px;
+    line-height:1.45;
+  }
+  
+  /* =========================
+     Sheets (Cited BibTeX panel)
+     ========================= */
+  .hidden {
+    display:none !important;
+  }
+  
+  .sheet {
+    position:fixed;
+    right:16px;
+    bottom:16px;
+    width:min(640px,90vw);
+    height:320px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    z-index:9999;
+  }
+  
+  .sheet-head {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:8px;
+  }
+  
+  .sheet-title {
+    font-weight:600;
+  }
+  
+  .sheet-actions button + button {
+    margin-left:6px;
+  }
+  
+  .sheet textarea {
+    flex:1;
+    resize:none;
+    width:100%;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size:12px;
+    line-height:1.35;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px;
+    background:#fafafa;
+  }
+  
+  .sheet .hint {
+    margin-top:6px;
+    color:#6b7280;
+    font-size:12px;
+  }
+  
+  /* =========================
+     Centered Import Library modal
+     ========================= */
+  .modal-wrap {
+    position:fixed;
+    inset:0;
+    display:grid;
+    place-items:center;
+    z-index:10000;
+  }
+  
+  .modal-wrap.hidden {
+    display:none;
+  }
+  
+  .modal-backdrop {
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,.35);
+  }
+  
+  .modal-card {
+    position:relative;
+    z-index:1;
+    width:min(640px,92vw);
+    max-height:min(70vh,520px);
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    box-shadow:0 20px 50px rgba(0,0,0,.25);
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+  }
+  
+  .modal-card .sheet-head {
+    margin-bottom:8px;
+  }
+  
+  .modal-card textarea {
+    flex:1;
+    resize:none;
+    width:100%;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size:12px;
+    line-height:1.35;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px;
+    background:#fafafa;
+  }
+  
+  /* Prevent scroll when modal is open */
+  .body-no-scroll {
+    overflow:hidden;
+  }
