@@ -344,10 +344,16 @@ Office.onReady(async () => {
       // Reset search box
       const search = document.getElementById("search") as HTMLInputElement | null;
       if (search) search.value = "";
+
+      await getLibrary();
+
+      await getCitedOrder();
+
+      await refreshCitedBibtexPanel();
   
       // Repaint list + cited BibTeX + style badge
       await refreshResults("");
-      await refreshCitedBibtexPanel();
+     
       updateStyleBadge();
   
       showToast("WordRef panel reloaded.");
