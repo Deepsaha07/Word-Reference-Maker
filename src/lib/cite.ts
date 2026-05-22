@@ -177,13 +177,30 @@ export async function updateBibliography(
     // Avoid paragraph formatting inside content controls because it can throw
     // Sys.ArgumentOutOfRangeException: Parameter name: index.
     if (isWordWeb) {
-      console.warn(
-        "[WordRef] Word Web detected: bibliography text updated, paragraph formatting skipped for compatibility."
-      );
+      const body = ctx.document.body;
+    
+      const paras = body.paragraphs;
+      paras.load("items/text");
       await ctx.sync();
+    
+      let heading = paras.items.find(
+        p => (p.text || "").trim().toLowerCase() === "references"
+      );
+    
+      if (!heading) {
+        heading = body.insertParagraph("References", Word.InsertLocation.end);
+        body.insertParagraph("", Word.InsertLocation.end);
+        await ctx.sync();
+      }
+    
+      const bibText = lines.join("\n");
+    
+      body.insertParagraph(bibText, Word.InsertLocation.end);
+      await ctx.sync();
+    
+      console.warn("[WordRef] Word Web: bibliography inserted as plain text for compatibility.");
       return;
     }
-
     // Desktop Word formatting path - unchanged behavior
     try {
       const rng = bibCC.getRange();
@@ -354,9 +371,12 @@ export async function insertCitationControl(
   const sty = (style || "apa").toLowerCase();
   const isNumeric = ["ieee", "numeric", "vancouver", "acs"].includes(sty);
 
+  const isWordWeb =
+    Office.context.platform === Office.PlatformType.OfficeOnline;
+
   const dbg = (window as any).__WORDREF_DEBUG__ || {};
-  const FORCE_APPEND_END   = !!dbg.FORCE_APPEND_END;
-  const NO_CC_FALLBACK     = dbg.NO_CONTENT_CONTROL_FALLBACK !== false;
+  const FORCE_APPEND_END = !!dbg.FORCE_APPEND_END;
+  const NO_CC_FALLBACK = dbg.NO_CONTENT_CONTROL_FALLBACK !== false;
   const SAFE_MODE_NO_MERGE = !!dbg.SAFE_MODE_NO_MERGE;
 
   const setSelectedTextAsync = (t: string) =>
@@ -371,11 +391,16 @@ export async function insertCitationControl(
   return Word.run(async (ctx) => {
     const body = ctx.document.body;
 
+    const insertPlainText = async (range: Word.Range) => {
+      range.insertText(text, Word.InsertLocation.replace);
+      await ctx.sync();
+      return true;
+    };
+
     if (FORCE_APPEND_END) {
       const p = body.insertParagraph("", Word.InsertLocation.end);
       const r = p.getRange("Start");
-      r.insertText(text, Word.InsertLocation.replace);
-      await ctx.sync();
+      await insertPlainText(r);
       return;
     }
 
@@ -383,67 +408,83 @@ export async function insertCitationControl(
     sel.load("text,parentContentControl,paragraphs");
     await ctx.sync();
 
-    // 1) INSIDE a WordRef cite → merge
+    // Word Web: avoid content controls entirely.
+    if (isWordWeb) {
+      try {
+        await insertPlainText(sel);
+        return;
+      } catch {
+        if (await setSelectedTextAsync(text)) return;
+
+        const p = body.insertParagraph("", Word.InsertLocation.end);
+        const r = p.getRange("Start");
+        await insertPlainText(r);
+        return;
+      }
+    }
+
+    // Desktop only: merge if cursor is inside a WordRef citation.
     if (!SAFE_MODE_NO_MERGE) {
       const parent = sel.parentContentControl;
+
       if (
-        parent && !parent.isNullObject &&
+        parent &&
+        !parent.isNullObject &&
         (parent.tag || "").startsWith("wordref-cite:") &&
-        isNumeric && typeof index === "number"
+        isNumeric &&
+        typeof index === "number"
       ) {
         const r = parent.getRange();
         r.load("text");
         await ctx.sync();
+
         const nums = parseBracketIndices(r.text);
         nums.push(index);
+
         parent.insertText(formatCitationGroup(nums), Word.InsertLocation.replace);
         await ctx.sync();
         return;
       }
     }
 
-    // 2) JUST AFTER a WordRef cite in same paragraph → snap back and merge
+    // Desktop only: if just after a WordRef citation, merge with previous citation.
     if (!SAFE_MODE_NO_MERGE && isNumeric && typeof index === "number") {
       try {
         const para = sel.paragraphs.getFirst();
         para.load("text");
         await ctx.sync();
 
-        // find last WordRef cite CC whose end touches selection
-        const candidate = await (async () => {
-          const all = ctx.document.contentControls;
-          all.load("items/tag");
-          await ctx.sync();
-          const items = all.items.filter(cc => (cc.tag || "").startsWith("wordref-cite:"));
-          for (const cc of items) {
-            const rr = cc.getRange();
-            rr.load("text");
-            await ctx.sync();
-            // compare end-of-CC to selection start
-            const end = rr.getRange("End");
-            const cmp = end.compareLocationWith(sel);
-            // cmp === "Equal" means selection is at the same point; "After" means caret is after end
-            if (cmp.value === "Equal") return cc;
-          }
-          return null;
-        })();
+        const all = ctx.document.contentControls;
+        all.load("items/tag");
+        await ctx.sync();
 
-        if (candidate) {
-          const r = candidate.getRange();
-          r.load("text");
+        const items = all.items.filter((cc) =>
+          (cc.tag || "").startsWith("wordref-cite:")
+        );
+
+        for (const cc of items) {
+          const rr = cc.getRange();
+          rr.load("text");
           await ctx.sync();
-          const nums = parseBracketIndices(r.text);
-          nums.push(index);
-          candidate.insertText(formatCitationGroup(nums), Word.InsertLocation.replace);
+
+          const end = rr.getRange("End");
+          const cmp = end.compareLocationWith(sel);
           await ctx.sync();
-          return;
+
+          if (cmp.value === Word.LocationRelation.equal) {
+            const nums = parseBracketIndices(rr.text);
+            nums.push(index);
+
+            cc.insertText(formatCitationGroup(nums), Word.InsertLocation.replace);
+            await ctx.sync();
+            return;
+          }
         }
       } catch {
-        // ignore, fall through
+        // ignore and continue to normal insertion
       }
     }
 
-    // helper to try CC, then plain text fallback
     const tryCreateCC = async (range: Word.Range) => {
       try {
         const cc = range.insertContentControl();
@@ -462,29 +503,35 @@ export async function insertCitationControl(
       }
     };
 
-    // 3) Try at selection
     if (await tryCreateCC(sel)) return;
 
-    // 4) If inside a foreign CC, insert after paragraph
     try {
       const parent = sel.parentContentControl;
-      if (parent && !parent.isNullObject && !(parent.tag || "").startsWith("wordref-cite:")) {
+
+      if (
+        parent &&
+        !parent.isNullObject &&
+        !(parent.tag || "").startsWith("wordref-cite:")
+      ) {
         const para = sel.paragraphs.getFirst();
-        const afterPara = para.getRange("End").insertParagraph("", Word.InsertLocation.after);
+        const afterPara = para
+          .getRange("End")
+          .insertParagraph("", Word.InsertLocation.after);
+
         const r = afterPara.getRange("Start");
         if (await tryCreateCC(r)) return;
       }
-    } catch { /* ignore */ }
+    } catch {
+      // ignore
+    }
 
-    // 5) Common API try again
     if (await setSelectedTextAsync(text)) return;
 
-    // 6) Append at doc end
     const p = body.insertParagraph("", Word.InsertLocation.end);
     const r = p.getRange("Start");
+
     if (!(await tryCreateCC(r))) {
-      r.insertText(text, Word.InsertLocation.replace);
-      await ctx.sync();
+      await insertPlainText(r);
     }
   });
 }

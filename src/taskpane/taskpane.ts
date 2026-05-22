@@ -1686,6 +1686,7 @@ async function onUnmergeSelectedCitation(): Promise<void> {
       // Insert new single citation CCs BEFORE the group CC
       const groupRange = target.getRange();
       let cursor       = groupRange.insertText("", Word.InsertLocation.before);
+      let nextCursor: Word.Range;
 
       for (let i = 0; i < validIds.length; i++) {
         const id = validIds[i];
@@ -1697,12 +1698,18 @@ async function onUnmergeSelectedCitation(): Promise<void> {
 
         // Create an empty CC; text will be set by rerenderAllCitations
         const ccRange = cursor.insertText("", Word.InsertLocation.after);
-        const cc      = ccRange.insertContentControl();
-        cc.title      = "WordRef Citation";
-        cc.tag        = `wordref-cite:${id}`;
-        cc.appearance = "BoundingBox";
+        if (Office.context.platform === Office.PlatformType.OfficeOnline) {
+          ccRange.insertText(formatInText(lib[id], style, order.indexOf(id) + 1), Word.InsertLocation.replace);
+        } else {
+          const cc = ccRange.insertContentControl();
+          cc.title = "WordRef Citation";
+          cc.tag = `wordref-cite:${id}`;
+          cc.appearance = "BoundingBox";
+        }
+        //cc.title      = "WordRef Citation";
+       
 
-        cursor = cc.getRange("End");
+        cursor = nextCursor;
       }
 
       // Remove the old merged group completely
