@@ -15,7 +15,7 @@ import {
 } from "../lib/storage";
 import type { BibFormatOptions } from "../lib/cite";
 import * as Cite from "../lib/cite";
-
+import { parseCitationInput } from "../lib/importParser";
 const DEBUG_SIMPLE_INSERT = true;
 const {
   formatInText,
@@ -322,158 +322,180 @@ async function guard<T>(label: string, fn: () => Promise<T>): Promise<T | undefi
 }
 /* ============= UI boot ============= */
 
-Office.onReady(async () => {
-  $("btnAddOnly")?.addEventListener("click", onAddOnly);
-  $("btnAddCite")?.addEventListener("click", onAddAndCite);
-  $("btnInsertCite")?.addEventListener("click", onInsertOnly);
-  $("btnUpdateBib")?.addEventListener("click", onUpdateBib);
-  $("btnResetNumbering")?.addEventListener("click", onResetNumbering);
-  $("btnClearLibrary")?.addEventListener("click", onClearLibraryClick);
-  $("btnReload")?.addEventListener("click", () => {
-    void guard("Reload UI", async () => {
-      // Clear main input + note fields
-      const bibbox = document.getElementById("bibtexInput") as HTMLTextAreaElement | null;
-      if (bibbox) bibbox.value = "";
-  
-      const np = document.getElementById("notePage") as HTMLInputElement | null;
-      if (np) np.value = "";
-  
-      const nt = document.getElementById("noteText") as HTMLInputElement | null;
-      if (nt) nt.value = "";
-  
-      // Reset search box
-      const search = document.getElementById("search") as HTMLInputElement | null;
-      if (search) search.value = "";
+Office.onReady(async (info) => {
+  console.log("[WordReff] Office ready:", info);
 
-      await getLibrary();
+  try {
+    console.log("[WordReff] Binding buttons");
 
-      await getCitedOrder();
-
-      await refreshCitedBibtexPanel();
-  
-      // Repaint list + cited BibTeX + style badge
-      await refreshResults("");
-     
-      updateStyleBadge();
-  
-      showToast("WordRef panel reloaded.");
+    console.log("[WordReff] Buttons:", {
+      btnAddOnly: $("btnAddOnly"),
+      btnAddCite: $("btnAddCite"),
+      btnInsertCite: $("btnInsertCite"),
+      btnUpdateBib: $("btnUpdateBib"),
+      btnResetNumbering: $("btnResetNumbering"),
+      btnClearLibrary: $("btnClearLibrary"),
+      btnReload: $("btnReload"),
     });
-  });
-  // Open panels
-$("btnOpenLibPanel")?.addEventListener("click", async () => {
-  show("citedLibPanel");
-  await refreshCitedBibtexPanel(); // always current
-});
 
-$("btnOpenImportPanel")?.addEventListener("click", () => {
-  (document.getElementById("importBibtexBox") as HTMLTextAreaElement).value = "";
-  show("importLibPanel");
-});
+    $("btnAddOnly")?.addEventListener("click", () => void guard("Add only", onAddOnly));
+    $("btnAddCite")?.addEventListener("click", () => void guard("Add and cite", onAddAndCite));
+    $("btnInsertCite")?.addEventListener("click", () => void guard("Insert citation", onInsertOnly));
+    $("btnUpdateBib")?.addEventListener("click", () => void guard("Update bibliography", onUpdateBib));
+    $("btnResetNumbering")?.addEventListener("click", () => void guard("Reset numbering", onResetNumbering));
+    $("btnClearLibrary")?.addEventListener("click", () => void guard("Clear library", onClearLibraryClick));
 
-// Cited panel actions
-$("btnCitedClose")?.addEventListener("click", () => hide("citedLibPanel"));
-$("btnCitedRefresh")?.addEventListener("click", () => { void refreshCitedBibtexPanel(); });
-$("btnCitedCopy")?.addEventListener("click", copyCitedBibtexToClipboard);
+    $("btnReload")?.addEventListener("click", () => {
+      void guard("Reload UI", async () => {
+        const bibbox = $("bibtexInput") as HTMLTextAreaElement | null;
+        if (bibbox) bibbox.value = "";
 
-// Import panel actions
-$("btnImportClose")?.addEventListener("click", () => hide("importLibPanel"));
-$("btnImportParse")?.addEventListener("click", () => { void onImportBibtexPasted(); });
+        const np = $("notePage") as HTMLInputElement | null;
+        if (np) np.value = "";
 
-// ensure panel shows correct content on first open
-await refreshCitedBibtexPanel();
+        const nt = $("noteText") as HTMLInputElement | null;
+        if (nt) nt.value = "";
 
-  // Export / Import
-  document.getElementById("btnExport")?.addEventListener("click", async () => {
-    try {
-      await onExportLibrary();
-      setIoStatus(platformDownloadHint());
-    } catch (e) {
-      setIoStatus("Export failed. See console.", 5000);
-      console.error(e);
-    }
-  });
-  document.getElementById("btnImport")?.addEventListener("click", () => {
-    (document.getElementById("importFile") as HTMLInputElement)?.click();
-  });
-  (document.getElementById("importFile") as HTMLInputElement)
-    ?.addEventListener("change", (ev) => { void onImportFilePicked(ev); });
+        const search = $("search") as HTMLInputElement | null;
+        if (search) search.value = "";
 
-  // Help modal
-  document.getElementById("helpIcon")?.addEventListener("click", () => {
-    document.getElementById("instructionsModal")?.classList.add("show");
-  });
-  document.getElementById("helpText")?.addEventListener("click", () => {
-    document.getElementById("instructionsModal")?.classList.add("show");
-  });
-  document.getElementById("closeInstructions")?.addEventListener("click", () => {
-    document.getElementById("instructionsModal")?.classList.remove("show");
-  });
+        await getLibrary();
+        await getCitedOrder();
+        await refreshCitedBibtexPanel();
+        await refreshResults("");
 
-  document.getElementById("btnMergeSelected")
-  ?.addEventListener("click", () => { void onMergeSelectedCitations(); });
+        updateStyleBadge();
+        showToast("WordRef panel reloaded.");
+      });
+    });
 
-  document.getElementById("btnUnmergeSelected")
-    ?.addEventListener("click", () => { void onUnmergeSelectedCitation(); });
+    $("btnOpenLibPanel")?.addEventListener("click", () => {
+      void guard("Open cited library", async () => {
+        show("citedLibPanel");
+        await refreshCitedBibtexPanel();
+      });
+    });
 
-  // Live color swatch
-  const fontColorInput = document.getElementById("bibColor") as HTMLInputElement;
-  fontColorInput?.addEventListener("input", () => {
-    fontColorInput.style.backgroundColor = fontColorInput.value;
-  });
-  const openImportModal = () => {
-    document.getElementById("importModal")?.classList.remove("hidden");
-    document.body.classList.add("body-no-scroll");
-  };
-  const closeImportModal = () => {
-    document.getElementById("importModal")?.classList.add("hidden");
-    document.body.classList.remove("body-no-scroll");
-  };
-  
-  document.getElementById("btnOpenImportPanel")?.addEventListener("click", () => {
-    // don’t overlap with the sheet
-    document.getElementById("citedLibPanel")?.classList.add("hidden");
-    const box = document.getElementById("importBibtexBox");
-    if (box) (box as HTMLTextAreaElement).value = "";
-    openImportModal();
-  });
-  document.getElementById("btnImportClose")?.addEventListener("click", closeImportModal);
-  document.getElementById("importBackdrop")?.addEventListener("click", closeImportModal);
-  
-  // When user confirms:
-  document.getElementById("btnImportParse")?.addEventListener("click", async () => {
-    await onImportBibtexPasted(); // your existing parser that calls upsertEntry(...)
-    closeImportModal();
-  });
-  // Search
-  const search = $("search") as HTMLInputElement | null;
-  search?.addEventListener("input", async () => {
-    const q = search.value;
-    if (isLikelyBibtex(q)) {
-      const match = await findExistingFromBibtex(q);
-      await refreshResults(""); // show all for highlight
-      if (match?.id) {
-        const container = document.getElementById("results")!;
-        flashResultRow(container, match.id);
-        const reasonMsg = match.reason === "citationKey" ? "citation key" : match.reason.toUpperCase();
-        showToast(`Already in your library (matched by ${reasonMsg}).`);
-        return;
+    const openImportModal = () => {
+      document.getElementById("importModal")?.classList.remove("hidden");
+      document.body.classList.add("body-no-scroll");
+    };
+
+    const closeImportModal = () => {
+      document.getElementById("importModal")?.classList.add("hidden");
+      document.body.classList.remove("body-no-scroll");
+    };
+
+    $("btnOpenImportPanel")?.addEventListener("click", () => {
+      document.getElementById("citedLibPanel")?.classList.add("hidden");
+      const box = $("importBibtexBox") as HTMLTextAreaElement | null;
+      if (box) box.value = "";
+      openImportModal();
+    });
+
+    $("btnCitedClose")?.addEventListener("click", () => hide("citedLibPanel"));
+    $("btnCitedRefresh")?.addEventListener("click", () => void refreshCitedBibtexPanel());
+    $("btnCitedCopy")?.addEventListener("click", copyCitedBibtexToClipboard);
+
+    $("btnImportClose")?.addEventListener("click", closeImportModal);
+    $("importBackdrop")?.addEventListener("click", closeImportModal);
+
+    $("btnImportParse")?.addEventListener("click", () => {
+      void guard("Import BibTeX", async () => {
+        await onImportBibtexPasted();
+        closeImportModal();
+      });
+    });
+
+    $("btnExport")?.addEventListener("click", () => {
+      void guard("Export library", async () => {
+        await onExportLibrary();
+        setIoStatus(platformDownloadHint());
+      });
+    });
+
+    $("btnImport")?.addEventListener("click", () => {
+      ($("importFile") as HTMLInputElement | null)?.click();
+    });
+
+    ($("importFile") as HTMLInputElement | null)?.addEventListener("change", (ev) => {
+      void onImportFilePicked(ev);
+    });
+
+    $("helpIcon")?.addEventListener("click", () => {
+      document.getElementById("instructionsModal")?.classList.add("show");
+    });
+
+    $("helpText")?.addEventListener("click", () => {
+      document.getElementById("instructionsModal")?.classList.add("show");
+    });
+
+    $("closeInstructions")?.addEventListener("click", () => {
+      document.getElementById("instructionsModal")?.classList.remove("show");
+    });
+
+    $("btnMergeSelected")?.addEventListener("click", () => {
+      void guard("Merge selected citations", onMergeSelectedCitations);
+    });
+
+    $("btnUnmergeSelected")?.addEventListener("click", () => {
+      void guard("Unmerge selected citation", onUnmergeSelectedCitation);
+    });
+
+    const fontColorInput = $("bibColor") as HTMLInputElement | null;
+    fontColorInput?.addEventListener("input", () => {
+      fontColorInput.style.backgroundColor = fontColorInput.value;
+    });
+
+    const search = $("search") as HTMLInputElement | null;
+    search?.addEventListener("input", () => {
+      void guard("Search", async () => {
+        const q = search.value;
+
+        if (isLikelyBibtex(q)) {
+          const match = await findExistingFromBibtex(q);
+          await refreshResults("");
+
+          if (match?.id) {
+            const container = document.getElementById("results");
+            if (container) flashResultRow(container, match.id);
+
+            const reasonMsg =
+              match.reason === "citationKey"
+                ? "citation key"
+                : match.reason.toUpperCase();
+
+            showToast(`Already in your library (matched by ${reasonMsg}).`);
+            return;
+          }
+        }
+
+        await refreshResults(q);
+        await refreshCitedBibtexPanel();
+      });
+    });
+
+    updateStyleBadge();
+
+    ($("styleSelect") as HTMLSelectElement | null)?.addEventListener("change", () => {
+      void onStyleChanged();
+    });
+
+    Office.context.document.addHandlerAsync(
+      Office.EventType.DocumentSelectionChanged,
+      () => {
+        void onSelectionChanged();
       }
-    }
-    await refreshResults(q);
+    );
+
     await refreshCitedBibtexPanel();
-  });
+    await refreshResults("");
 
-  // Style badge + on change
-  updateStyleBadge();
-  (document.getElementById("styleSelect") as HTMLSelectElement | null)
-    ?.addEventListener("change", onStyleChanged);
-
-  Office.context.document.addHandlerAsync(
-    Office.EventType.DocumentSelectionChanged,
-    () => { void onSelectionChanged(); }
-  );
-  // Initial results
-  await refreshResults("");
+    console.log("[WordReff] UI boot completed");
+  } catch (err) {
+    console.error("[WordReff] Office.onReady boot failed:", err);
+    showToast("WordReff failed to initialise. Check console.");
+  }
 });
 
 /* ============= Insert paths ============= */
@@ -590,7 +612,7 @@ async function onAddOnly() {
 
   let entries: BibEntry[] = [];
   try {
-    const parsed = Bib.parseBibtex(raw);
+    const parsed = await parseCitationInput(raw);
     entries = parsed.map((e) => normalizeEntry(e));
   } catch {
     showToast("Could not parse the BibTeX you pasted.");
@@ -757,7 +779,7 @@ async function onAddAndCite() {
 
   let entries: BibEntry[] = [];
   try {
-    const parsed = Bib.parseBibtex(raw);
+    const parsed = await parseCitationInput(raw);
     entries = parsed.map((e) => normalizeEntry(e));
   } catch {
     showToast("Could not parse the BibTeX you pasted.");
@@ -1355,10 +1377,15 @@ async function findExistingFromBibtex(raw: string): Promise<BibMatch | null> {
   const lib = await getLibrary();
   const all = Object.values(lib) as BibEntry[];
   let parsed: BibEntry[];
-  try { parsed = Bib.parseBibtex(raw); } catch { return null; }
-  if (!parsed.length) return null;
-  const needle = parsed[0];
+  try {
+    parsed = await parseCitationInput(raw).map((e) => normalizeEntry(e));
+  } catch {
+    return null;
+  }
 
+  if (!parsed.length) return null;
+
+  const needle = parsed[0];
   const nid = (needle.id || "").trim();
   if (nid) { const hit = all.find((e) => e.id === nid); if (hit) return { id: hit.id, reason: "citationKey" }; }
 
