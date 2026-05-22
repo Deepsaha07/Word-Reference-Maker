@@ -159,21 +159,30 @@ export async function updateBibliography(
     await ctx.sync();
 
     // Apply formatting to paragraphs inside the CC
+    // Apply formatting to the whole bibliography range
     try {
       const rng = bibCC.getRange();
+
+      rng.font.name = opts?.fontName || "Times New Roman";
+      rng.font.size = opts?.fontSize || 12;
+      rng.font.color = opts?.color || "#333333";
+
+      await ctx.sync();
+
       const paras = rng.paragraphs;
-    
       paras.load("items");
       await ctx.sync();
-    
+
       for (const p of paras.items) {
-        if (opts?.fontName) p.font.name = opts.fontName;
-        if (opts?.fontSize !== undefined) p.font.size = opts.fontSize;
-        if (opts?.color) p.font.color = opts.color;
-        if (opts?.alignment !== undefined) p.alignment = opts.alignment;
-        if (opts?.lineSpacing !== undefined) p.lineSpacing = opts.lineSpacing;
+        if (opts?.alignment !== undefined) {
+          p.alignment = opts.alignment;
+        }
+
+        if (opts?.lineSpacing !== undefined) {
+          p.lineSpacing = opts.lineSpacing;
+        }
       }
-    
+
       await ctx.sync();
     } catch (err) {
       console.error("[WordRef] Bibliography formatting failed:", err);
