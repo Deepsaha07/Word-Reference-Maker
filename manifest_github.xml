@@ -7,7 +7,7 @@
 
   <Id>2366514C-4D30-4385-889D-41E2FB35DDEA</Id>
   <Version>1.0.0.0</Version>
-  <ProviderName>WordReff</ProviderName>
+  <ProviderName>Research Reboot</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
 
   <DisplayName DefaultValue="WordReff - BibTeX paste &amp; cite"/>
