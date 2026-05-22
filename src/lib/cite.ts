@@ -124,91 +124,60 @@ export async function updateBibliography(
   style: string = "apa",
   opts?: BibFormatOptions
 ): Promise<void> {
-  const styleKey = (style || "apa").toLowerCase();
-
-  // De-duplicate entries by id.
+  // de-dup + sort for author-year styles
   const seen = new Set<string>();
-  let list = entries.filter((e) => {
-    if (!e?.id || seen.has(e.id)) return false;
-    seen.add(e.id);
-    return true;
-  });
-
-  // Author-year styles usually expect alphabetical bibliography order.
-  if (["apa", "harvard", "mla"].includes(styleKey)) {
-    list = [...list].sort((a, b) =>
-      (a.fields.author || "").localeCompare(b.fields.author || "")
-    );
+  let list = entries.filter(e => !seen.has(e.id) && (seen.add(e.id), true));
+  if (["apa", "harvard", "mla"].includes((style || "apa").toLowerCase())) {
+    list = [...list].sort((a, b) => (a.fields.author || "").localeCompare(b.fields.author || ""));
   }
 
-  const escapeHtml = (value: unknown): string =>
-    String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-
-  const alignmentToCss = (alignment?: Word.Alignment): string => {
-    const raw = String(alignment || "").toLowerCase();
-
-    if (raw.includes("center")) return "center";
-    if (raw.includes("right")) return "right";
-    if (raw.includes("justify")) return "justify";
-
-    return "left";
-  };
-
   await Word.run(async (ctx) => {
-    const body = ctx.document.body;
-
-    // Ensure bibliography heading exists.
-    const paras = body.paragraphs;
-    paras.load("items/text");
-    await ctx.sync();
-
-    let heading = paras.items.find(
-      (p) => (p.text || "").trim().toLowerCase() === "references"
-    );
-
-    if (!heading) {
-      heading = body.insertParagraph("References", Word.InsertLocation.end);
-      heading.styleBuiltIn = Word.BuiltInStyleName.heading1;
-      body.insertParagraph("", Word.InsertLocation.end);
+    // ensure heading, then one CC
+    const heading = await (async () => {
+      const body = ctx.document.body;
+      const paras = body.paragraphs;
+      paras.load("items,text");
       await ctx.sync();
-    }
+      let h = paras.items.find(p => p.text.trim().toLowerCase() === "references");
+      if (!h) {
+        h = body.insertParagraph("References", Word.InsertLocation.end);
+        h.styleBuiltIn = Word.BuiltInStyleName.heading1;
+        body.insertParagraph("", Word.InsertLocation.end);
+        await ctx.sync();
+      }
+      return h!;
+    })();
 
     const bibCC = await getOrCreateBibCC(ctx, heading);
 
-    const lines = list.map((entry, index) =>
-      formatBibliographyEntry(entry, styleKey, index + 1)
-    );
+    // Build full text once
+    const lines = list.map((e, i) => formatBibliographyEntry(e, style, i + 1));
+    const bibText = lines.join("\n");
 
-    const fontName = opts?.fontName || "Times New Roman";
-    const fontSize = opts?.fontSize || 12;
-    const color = opts?.color || "#333333";
-    const lineSpacing = opts?.lineSpacing || 14;
-    const textAlign = alignmentToCss(opts?.alignment);
+    // Replace the whole CC with fresh text (one write)
+    bibCC.insertText(bibText, Word.InsertLocation.replace);
+    await ctx.sync();
 
-    const html = lines.length
-      ? lines
-          .map(
-            (line) => `
-              <p style="
-                font-family:'${escapeHtml(fontName)}';
-                font-size:${fontSize}pt;
-                color:${escapeHtml(color)};
-                line-height:${lineSpacing}pt;
-                text-align:${textAlign};
-                margin:0 0 6pt 0;
-              ">${escapeHtml(line)}</p>
-            `
-          )
-          .join("")
-      : "";
-
-    // Use HTML insertion for better compatibility across Word Web, Windows, and Mac.
-    bibCC.insertHtml(html, Word.InsertLocation.replace);
+    // Apply formatting to paragraphs inside the CC
+    try {
+      const rng = bibCC.getRange();
+      const paras = rng.paragraphs;
+    
+      paras.load("items");
+      await ctx.sync();
+    
+      for (const p of paras.items) {
+        if (opts?.fontName) p.font.name = opts.fontName;
+        if (opts?.fontSize !== undefined) p.font.size = opts.fontSize;
+        if (opts?.color) p.font.color = opts.color;
+        if (opts?.alignment !== undefined) p.alignment = opts.alignment;
+        if (opts?.lineSpacing !== undefined) p.lineSpacing = opts.lineSpacing;
+      }
+    
+      await ctx.sync();
+    } catch (err) {
+      console.error("[WordRef] Bibliography formatting failed:", err);
+    }
 
     await ctx.sync();
   });

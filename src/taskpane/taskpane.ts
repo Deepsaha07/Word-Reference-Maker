@@ -1010,25 +1010,29 @@ async function deleteAllWordRefContentControlsEverywhere(): Promise<void> {
 async function onUpdateBib() {
   console.log("[WordRef] onUpdateBib started");
 
-  async function onUpdateBib() {
-    console.log("[WordRef] onUpdateBib started");
-  
-    try {
-      console.log("[WordRef] Format options:", getBibFormatOpts());
-  
-      await refreshNumbersAndBibliography();
-      await rerenderGroupCitations(getStyle());
-  
-      showToast("Bibliography updated.");
-    } catch (err: any) {
-      console.error("[WordRef] updateBibliography failed", err, err?.debugInfo);
-  
-      const info = err?.debugInfo
-        ? JSON.stringify(err.debugInfo)
-        : String(err);
-  
-      showToast("Update bibliography failed. " + info);
-    }
+  try {
+    const opts = getBibFormatOpts();
+
+    console.log("[WordRef] Current style:", getStyle());
+    console.log("[WordRef] Bibliography format options:", opts);
+
+    await refreshNumbersAndBibliography();
+
+    console.log("[WordRef] refreshNumbersAndBibliography completed");
+
+    await rerenderGroupCitations(getStyle());
+
+    console.log("[WordRef] rerenderGroupCitations completed");
+
+    showToast("Bibliography updated.");
+  } catch (err: any) {
+    console.error("[WordRef] updateBibliography failed", err, err?.debugInfo);
+
+    const info = err?.debugInfo
+      ? JSON.stringify(err.debugInfo)
+      : String(err);
+
+    showToast("Update bibliography failed. " + info);
   }
 }
 
