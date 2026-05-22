@@ -45,7 +45,7 @@ inserting citations, and automatically generating bibliographies.
 
   <p>
     Email support:
-    <a href="mailto:YOUR_EMAIL@example.com">
+    <a href="mailto:shuvodeep@resboot.net">
       YOUR_EMAIL@example.com
     </a>
   </p>
@@ -61,10 +61,78 @@ inserting citations, and automatically generating bibliographies.
 <div class="box">
   <h2>Basic Troubleshooting</h2>
 
+  <h3>1. Add-in does not load</h3>
   <ul>
     <li>Close and reopen the WordRef task pane.</li>
-    <li>Click the Reload button inside the add-in.</li>
-    <li>Restart Microsoft Word if the add-in becomes unresponsive.</li>
+    <li>Restart Microsoft Word completely.</li>
+    <li>Check that you are connected to the internet.</li>
+    <li>Ensure Microsoft Word is updated to the latest version.</li>
+  </ul>
+
+  <h3>2. Buttons are not responding</h3>
+  <ul>
+    <li>Click the <strong>Reload</strong> button inside the add-in.</li>
+    <li>Wait a few seconds after opening the task pane before clicking buttons.</li>
+    <li>Reopen the document and try again.</li>
+  </ul>
+
+  <h3>3. Citation was not inserted</h3>
+  <ul>
+    <li>Make sure the cursor is placed inside the document body before inserting citations.</li>
+    <li>Avoid inserting citations inside headers, footers, or protected sections.</li>
+    <li>Try clicking directly into a paragraph and insert again.</li>
+  </ul>
+
+  <h3>4. Bibliography is not updating</h3>
+  <ul>
+    <li>Click the <strong>Update Bibliography</strong> button.</li>
+    <li>Ensure at least one citation exists in the document.</li>
+    <li>Try changing the citation style and updating again.</li>
+  </ul>
+
+  <h3>5. Imported BibTeX is not recognised</h3>
+  <ul>
+    <li>Ensure the BibTeX format is valid and starts with entries such as <code>@article{}</code> or <code>@inproceedings{}</code>.</li>
+    <li>Remove unsupported or malformed fields if parsing fails.</li>
+    <li>Try importing one BibTeX entry at a time to isolate formatting issues.</li>
+  </ul>
+
+  <h3>6. Duplicate references detected</h3>
+  <ul>
+    <li>WordRef automatically skips duplicate citation keys.</li>
+    <li>Ensure imported entries use unique BibTeX citation keys.</li>
+  </ul>
+
+  <h3>7. Add-in appears blank or frozen</h3>
+  <ul>
+    <li>Close the task pane and reopen it from the Word ribbon.</li>
+    <li>Restart Microsoft Word.</li>
+    <li>Clear Office cache if the issue persists.</li>
+  </ul>
+
+  <h3>8. Export or import is not working</h3>
+  <ul>
+    <li>Check browser or Office permissions for downloads.</li>
+    <li>Ensure the selected import file is valid JSON, CSV, XML, or BibTeX.</li>
+    <li>Try exporting again after reloading the add-in.</li>
+  </ul>
+
+  <h3>9. Microsoft Word compatibility</h3>
+  <ul>
+    <li>WordRef is designed for Microsoft Word with Office Add-ins support.</li>
+    <li>Some older desktop versions may not fully support advanced citation controls.</li>
+  </ul>
+
+  <h3>10. Still need help?</h3>
+  <p>
+    Contact support via email or open an issue on GitHub with:
+  </p>
+
+  <ul>
+    <li>A short description of the issue</li>
+    <li>Steps to reproduce the problem</li>
+    <li>Screenshots if available</li>
+    <li>Your Microsoft Word platform/version</li>
   </ul>
 </div>
 
