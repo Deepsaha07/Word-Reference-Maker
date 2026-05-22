@@ -645,45 +645,69 @@
   }
 
   /* ===== First Run Experience ===== */
+  .intro-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
 
-.intro-box {
-  background: #f5f3ff;
-  border: 1px solid #d9ccff;
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 14px;
-}
+  .intro-min-btn {
+    width:24px;
+    height:24px;
+    min-width:24px;
+    border-radius:50%;
+    border:none;
+    background:#e9ddff;
+    color:#4b2ca3;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    line-height:1;
+    padding:0;
+  }
 
-.intro-title {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #2d1b69;
-}
+  .intro-min-btn:hover {
+    background:#d9c8ff;
+  }
+  .intro-box {
+    background: #f5f3ff;
+    border: 1px solid #d9ccff;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
 
-.intro-text {
-  font-size: 13px;
-  line-height: 1.5;
-  margin-bottom: 12px;
-  color: #333;
-}
+  .intro-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #2d1b69;
+  }
 
-.intro-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 10px;
-}
+  .intro-text {
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    color: #333;
+  }
 
-.intro-step {
-  font-size: 13px;
-  background: white;
-  border-radius: 8px;
-  padding: 8px 10px;
-  border: 1px solid #ece7ff;
-}
+  .intro-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
 
-.intro-note {
-  font-size: 12px;
-  color: #555;
-}
+  .intro-step {
+    font-size: 13px;
+    background: white;
+    border-radius: 8px;
+    padding: 8px 10px;
+    border: 1px solid #ece7ff;
+  }
+
+  .intro-note {
+    font-size: 12px;
+    color: #555;
+  }
