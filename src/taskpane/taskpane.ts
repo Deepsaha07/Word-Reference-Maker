@@ -509,22 +509,25 @@ Office.onReady(async (info) => {
 /* ============= Insert paths ============= */
 
 async function simpleInsert(e: BibEntry, style: string) {
-  // compute numeric index from first-cited order
   let order = await getCitedOrder();
   let pos = order.indexOf(e.id);
+
   if (pos === -1) {
     await markCited(e.id);
     order = await getCitedOrder();
     pos = order.indexOf(e.id);
   }
+
   const idx = pos >= 0 ? pos + 1 : 1;
   const text = formatInText(e, style, idx);
+
+  const isWordWeb =
+    Office.context.platform === Office.PlatformType.OfficeOnline;
 
   await Word.run(async (ctx) => {
     const body = ctx.document.body;
 
-    // Ensure selection; else end-of-doc
-    const ensureSelection = async (): Promise<Word.Range> => {
+    const getSafeSelection = async (): Promise<Word.Range> => {
       try {
         const sel = ctx.document.getSelection();
         sel.load("text");
@@ -538,28 +541,45 @@ async function simpleInsert(e: BibEntry, style: string) {
       }
     };
 
-    try {
-      const sel = await ensureSelection();
-      const cc = sel.insertContentControl();
+    const insertPlainTextCitation = async (range: Word.Range) => {
+      range.insertText(text, Word.InsertLocation.replace);
+      await ctx.sync();
+    };
+
+    const insertContentControlCitation = async (range: Word.Range) => {
+      const cc = range.insertContentControl();
       cc.tag = `wordref-cite:${e.id}`;
       cc.title = "WordRef Citation";
+
+      // BoundingBox causes ghost-box issues in Word Web, so use it only on desktop.
       cc.appearance = "BoundingBox";
+
       cc.insertText(text, Word.InsertLocation.replace);
       await ctx.sync();
+    };
+
+    try {
+      const sel = await getSafeSelection();
+
+      if (isWordWeb) {
+        await insertPlainTextCitation(sel);
+      } else {
+        await insertContentControlCitation(sel);
+      }
+
       return;
     } catch (err) {
-      console.warn("[WordRef] selection CC insert failed; will append at end", err);
+      console.warn("[WordRef] selection insert failed; appending at document end", err);
     }
 
-    // Fallback: append at end
-    const p = body.insertParagraph("", Word.InsertLocation.end);
-    const r = p.getRange("Start");
-    const cc = r.insertContentControl();
-    cc.tag = `wordref-cite:${e.id}`;
-    cc.title = "WordRef Citation";
-    cc.appearance = "BoundingBox";
-    cc.insertText(text, Word.InsertLocation.replace);
-    await ctx.sync();
+    const fallbackPara = body.insertParagraph("", Word.InsertLocation.end);
+    const fallbackRange = fallbackPara.getRange("Start");
+
+    if (isWordWeb) {
+      await insertPlainTextCitation(fallbackRange);
+    } else {
+      await insertContentControlCitation(fallbackRange);
+    }
   });
 }
 

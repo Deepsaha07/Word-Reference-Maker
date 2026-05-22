@@ -127,45 +127,71 @@ export async function updateBibliography(
   // de-dup + sort for author-year styles
   const seen = new Set<string>();
   let list = entries.filter(e => !seen.has(e.id) && (seen.add(e.id), true));
+
   if (["apa", "harvard", "mla"].includes((style || "apa").toLowerCase())) {
-    list = [...list].sort((a, b) => (a.fields.author || "").localeCompare(b.fields.author || ""));
+    list = [...list].sort((a, b) =>
+      (a.fields.author || "").localeCompare(b.fields.author || "")
+    );
   }
+
+  const isWordWeb =
+    Office.context.platform === Office.PlatformType.OfficeOnline;
 
   await Word.run(async (ctx) => {
     // ensure heading, then one CC
     const heading = await (async () => {
       const body = ctx.document.body;
       const paras = body.paragraphs;
+
       paras.load("items,text");
       await ctx.sync();
-      let h = paras.items.find(p => p.text.trim().toLowerCase() === "references");
+
+      let h = paras.items.find(
+        p => p.text.trim().toLowerCase() === "references"
+      );
+
       if (!h) {
         h = body.insertParagraph("References", Word.InsertLocation.end);
         h.styleBuiltIn = Word.BuiltInStyleName.heading1;
         body.insertParagraph("", Word.InsertLocation.end);
         await ctx.sync();
       }
+
       return h!;
     })();
 
     const bibCC = await getOrCreateBibCC(ctx, heading);
 
     // Build full text once
-    const lines = list.map((e, i) => formatBibliographyEntry(e, style, i + 1));
+    const lines = list.map((e, i) =>
+      formatBibliographyEntry(e, style, i + 1)
+    );
+
     const bibText = lines.join("\n");
 
-    // Replace the whole CC with fresh text (one write)
+    // Replace the whole CC with fresh text
     bibCC.insertText(bibText, Word.InsertLocation.replace);
     await ctx.sync();
 
-    // Apply formatting to paragraphs inside the CC
+    // Word Web fallback:
+    // Avoid paragraph formatting inside content controls because it can throw
+    // Sys.ArgumentOutOfRangeException: Parameter name: index.
+    if (isWordWeb) {
+      console.warn(
+        "[WordRef] Word Web detected: bibliography text updated, paragraph formatting skipped for compatibility."
+      );
+      await ctx.sync();
+      return;
+    }
+
+    // Desktop Word formatting path - unchanged behavior
     try {
       const rng = bibCC.getRange();
       const paras = rng.paragraphs;
-    
+
       paras.load("items");
       await ctx.sync();
-    
+
       for (const p of paras.items) {
         if (opts?.fontName) p.font.name = opts.fontName;
         if (opts?.fontSize !== undefined) p.font.size = opts.fontSize;
@@ -173,7 +199,7 @@ export async function updateBibliography(
         if (opts?.alignment !== undefined) p.alignment = opts.alignment;
         if (opts?.lineSpacing !== undefined) p.lineSpacing = opts.lineSpacing;
       }
-    
+
       await ctx.sync();
     } catch (err) {
       console.error("[WordRef] Bibliography formatting failed:", err);
