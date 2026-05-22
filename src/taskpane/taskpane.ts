@@ -324,30 +324,29 @@ Office.onReady(async (info) => {
   console.log("[WordReff] Office ready:", info);
 
   try {
+    const bind = (id: string, label: string, fn: () => Promise<any>) => {
+      const el = $(id);
+      console.log(`[WordReff] ${id}:`, el);
 
-    OfficeExtension.config.extendedErrorLogging = true;
+      if (!el) {
+        console.warn(`[WordReff] Missing button/element: ${id}`);
+        return;
+      }
 
-  } catch {}
+      el.addEventListener("click", () => {
+        console.log(`[WordReff] ${label} clicked`);
+        void guard(label, fn);
+      });
+    };
 
-  try {
-    console.log("[WordReff] Binding buttons");
-
-    console.log("[WordReff] Buttons:", {
-      btnAddOnly: $("btnAddOnly"),
-      btnAddCite: $("btnAddCite"),
-      btnInsertCite: $("btnInsertCite"),
-      btnUpdateBib: $("btnUpdateBib"),
-      btnResetNumbering: $("btnResetNumbering"),
-      btnClearLibrary: $("btnClearLibrary"),
-      btnReload: $("btnReload"),
-    });
-
-    $("btnAddOnly")?.addEventListener("click", () => void guard("Add only", onAddOnly));
-    $("btnAddCite")?.addEventListener("click", () => void guard("Add and cite", onAddAndCite));
-    $("btnInsertCite")?.addEventListener("click", () => void guard("Insert citation", onInsertOnly));
-    $("btnUpdateBib")?.addEventListener("click", () => void guard("Update bibliography", onUpdateBib));
-    $("btnResetNumbering")?.addEventListener("click", () => void guard("Reset numbering", onResetNumbering));
-    $("btnClearLibrary")?.addEventListener("click", () => void guard("Clear library", onClearLibraryClick));
+    bind("btnAddOnly", "Add only", onAddOnly);
+    bind("btnAddCite", "Add and cite", onAddAndCite);
+    bind("btnInsertCite", "Insert citation", onInsertOnly);
+    bind("btnUpdateBib", "Update bibliography", onUpdateBib);
+    bind("btnResetNumbering", "Reset numbering", onResetNumbering);
+    bind("btnClearLibrary", "Clear library", onClearLibraryClick);
+    bind("btnMergeSelected", "Merge selected citations", onMergeSelectedCitations);
+    bind("btnUnmergeSelected", "Unmerge selected citation", onUnmergeSelectedCitation);
 
     $("btnReload")?.addEventListener("click", () => {
       void guard("Reload UI", async () => {
@@ -363,20 +362,11 @@ Office.onReady(async (info) => {
         const search = $("search") as HTMLInputElement | null;
         if (search) search.value = "";
 
-        await getLibrary();
-        await getCitedOrder();
         await refreshCitedBibtexPanel();
         await refreshResults("");
-
         updateStyleBadge();
-        showToast("WordRef panel reloaded.");
-      });
-    });
 
-    $("btnOpenLibPanel")?.addEventListener("click", () => {
-      void guard("Open cited library", async () => {
-        show("citedLibPanel");
-        await refreshCitedBibtexPanel();
+        showToast("WordRef panel reloaded.");
       });
     });
 
@@ -390,8 +380,15 @@ Office.onReady(async (info) => {
       document.body.classList.remove("body-no-scroll");
     };
 
+    $("btnOpenLibPanel")?.addEventListener("click", () => {
+      void guard("Open cited library", async () => {
+        show("citedLibPanel");
+        await refreshCitedBibtexPanel();
+      });
+    });
+
     $("btnOpenImportPanel")?.addEventListener("click", () => {
-      document.getElementById("citedLibPanel")?.classList.add("hidden");
+      hide("citedLibPanel");
       const box = $("importBibtexBox") as HTMLTextAreaElement | null;
       if (box) box.value = "";
       openImportModal();
@@ -438,14 +435,6 @@ Office.onReady(async (info) => {
       document.getElementById("instructionsModal")?.classList.remove("show");
     });
 
-    $("btnMergeSelected")?.addEventListener("click", () => {
-      void guard("Merge selected citations", onMergeSelectedCitations);
-    });
-
-    $("btnUnmergeSelected")?.addEventListener("click", () => {
-      void guard("Unmerge selected citation", onUnmergeSelectedCitation);
-    });
-
     const fontColorInput = $("bibColor") as HTMLInputElement | null;
     fontColorInput?.addEventListener("input", () => {
       fontColorInput.style.backgroundColor = fontColorInput.value;
@@ -461,7 +450,7 @@ Office.onReady(async (info) => {
           await refreshResults("");
 
           if (match?.id) {
-            const container = document.getElementById("results");
+            const container = $("results");
             if (container) flashResultRow(container, match.id);
 
             const reasonMsg =
@@ -485,12 +474,12 @@ Office.onReady(async (info) => {
       void onStyleChanged();
     });
 
-    Office.context.document.addHandlerAsync(
-      Office.EventType.DocumentSelectionChanged,
-      () => {
-        void onSelectionChanged();
-      }
-    );
+    if (Office.context?.document) {
+      Office.context.document.addHandlerAsync(
+        Office.EventType.DocumentSelectionChanged,
+        () => void onSelectionChanged()
+      );
+    }
 
     await refreshCitedBibtexPanel();
     await refreshResults("");
@@ -772,57 +761,74 @@ async function jumpToBibliographyEntry(entryId: string, order: string[]): Promis
 }
 
 async function onAddAndCite() {
+  console.log("[WordReff] Add and cite handler started");
+
   const bibbox = $("bibtexInput") as HTMLTextAreaElement | null;
-  if (!bibbox) return;
+  if (!bibbox) {
+    showToast("Input box not found.");
+    return;
+  }
+
   const raw = bibbox.value.trim();
-  if (!raw) return;
+  if (!raw) {
+    showToast("Paste a reference first.");
+    return;
+  }
 
   const where = ($("notePage") as HTMLInputElement | null)?.value.trim() || "";
   const note = ($("noteText") as HTMLInputElement | null)?.value.trim() || "";
   const style = getStyle();
 
   let entries: BibEntry[] = [];
+
   try {
     const parsed = await parseCitationInput(raw);
     entries = parsed.map((e) => normalizeEntry(e));
-  } catch {
-    showToast("Could not parse the BibTeX you pasted.");
+  } catch (err) {
+    console.error("[WordReff] Parse failed:", err);
+    showToast("Could not parse the reference.");
     return;
   }
 
-  let lib = await getLibrary();
+  if (!entries.length) {
+    showToast("No valid reference found.");
+    return;
+  }
+
+  const lib = await getLibrary();
+
   for (const base of entries) {
+    let e: BibEntry;
+
     if (lib[base.id]) {
-      await refreshResults("");
-      const container = document.getElementById("results")!;
-      flashResultRow(container, base.id);
-      showToast(`Already cited/added (${base.id}).`);
-      continue;
-    }
-    const e = where || note ? normalizeEntry({ ...base, notes: [{ where, text: note }] }) : base;
-
-    await upsertEntry(e);
-    lib[e.id] = e;
-
-    const idx = await ensureCitedIndex(e.id);
-    const citeText = formatInText(e, style, idx);
-
-    if (DEBUG_SIMPLE_INSERT) {
-      await simpleInsert(e, style);
-      await refreshNumbersAndBibliography();
-      await rerenderGroupCitations(getStyle());
+      e = lib[base.id];
+      showToast(`Existing entry found. Citing ${base.id}.`);
     } else {
-      await insertCitationControl(e, citeText, style, idx);
-      await refreshNumbersAndBibliography();
-      await rerenderGroupCitations(getStyle());
+      e = where || note
+        ? normalizeEntry({ ...base, notes: [{ where, text: note }] })
+        : base;
+
+      await upsertEntry(e);
+      lib[e.id] = e;
     }
+
+    await simpleInsert(e, style);
+    await refreshNumbersAndBibliography();
+    await rerenderGroupCitations(getStyle());
   }
 
   bibbox.value = "";
-  const np = $("notePage") as HTMLInputElement | null; if (np) np.value = "";
-  const nt = $("noteText") as HTMLInputElement | null; if (nt) nt.value = "";
+
+  const np = $("notePage") as HTMLInputElement | null;
+  if (np) np.value = "";
+
+  const nt = $("noteText") as HTMLInputElement | null;
+  if (nt) nt.value = "";
+
   await refreshResults("");
   await refreshCitedBibtexPanel();
+
+  showToast("Citation inserted.");
 }
 
 async function onInsertOnly() {
@@ -1380,9 +1386,12 @@ type BibMatch = { id?: string; reason: "citationKey" | "doi" | "title"; };
 async function findExistingFromBibtex(raw: string): Promise<BibMatch | null> {
   const lib = await getLibrary();
   const all = Object.values(lib) as BibEntry[];
+
   let parsed: BibEntry[];
+
   try {
-    parsed = await parseCitationInput(raw).map((e) => normalizeEntry(e));
+    const parsedRaw = await parseCitationInput(raw);
+    parsed = parsedRaw.map((e) => normalizeEntry(e));
   } catch {
     return null;
   }
@@ -1390,14 +1399,24 @@ async function findExistingFromBibtex(raw: string): Promise<BibMatch | null> {
   if (!parsed.length) return null;
 
   const needle = parsed[0];
+
   const nid = (needle.id || "").trim();
-  if (nid) { const hit = all.find((e) => e.id === nid); if (hit) return { id: hit.id, reason: "citationKey" }; }
+  if (nid) {
+    const hit = all.find((e) => e.id === nid);
+    if (hit) return { id: hit.id, reason: "citationKey" };
+  }
 
   const nd = norm(needle.fields.doi || "");
-  if (nd) { const hit = all.find((e) => norm(e.fields.doi || "") === nd); if (hit) return { id: hit.id, reason: "doi" }; }
+  if (nd) {
+    const hit = all.find((e) => norm(e.fields.doi || "") === nd);
+    if (hit) return { id: hit.id, reason: "doi" };
+  }
 
   const nt = normTitle(needle.fields.title || "");
-  if (nt) { const hit = all.find((e) => normTitle(e.fields.title || "") === nt); if (hit) return { id: hit.id, reason: "title" }; }
+  if (nt) {
+    const hit = all.find((e) => normTitle(e.fields.title || "") === nt);
+    if (hit) return { id: hit.id, reason: "title" };
+  }
 
   return null;
 }
