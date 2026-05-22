@@ -1,60 +1,151 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>WordRef – Support</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <title>WordRef Support</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-      max-width: 720px;
+    body{
+      font-family: Arial, sans-serif;
+      max-width: 800px;
       margin: 40px auto;
-      padding: 0 16px;
-      color: #111827;
-      background: #f9fafb;
+      padding: 20px;
+      line-height: 1.6;
+      color:#222;
     }
-    h1 { font-size: 24px; margin-bottom: 12px; }
-    h2 { font-size: 18px; margin-top: 24px; margin-bottom: 8px; }
-    p, li { font-size: 14px; line-height: 1.5; }
-    code {
-      background:#f3f4f6;
-      padding:2px 4px;
-      border-radius:3px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    h1{
+      color:#0f62fe;
     }
-    a { color:#2563eb; text-decoration:none; }
-    a:hover { text-decoration:underline; }
+    .box{
+      background:#f5f7fb;
+      border-radius:10px;
+      padding:20px;
+      margin-top:20px;
+    }
+    a{
+      color:#0f62fe;
+      text-decoration:none;
+    }
+    a:hover{
+      text-decoration:underline;
+    }
   </style>
 </head>
 <body>
-  <h1>WordRef – Support</h1>
-  <p><strong>Version:</strong> 1.0.0</p>
+
+<h1>WordRef Support</h1>
+
+<p>
+WordRef is a Microsoft Word add-in for managing BibTeX references,
+inserting citations, and automatically generating bibliographies.
+</p>
+
+<div class="box">
+  <h2>Support Contact</h2>
 
   <p>
-    WordRef is a Word add-in that lets you paste BibTeX (e.g., from Google Scholar),
-    store a small reference library, insert citations, and automatically format
-    your bibliography.
+    Email support:
+    <a href="mailto:shuvodeep@resboot.net">
+      Admin WordReff
+    </a>
   </p>
 
-  <h2>Help &amp; Issues</h2>
   <p>
-    If you find a bug, have a feature request, or need help:
+    GitHub Issues:
+    <a href="https://github.com/deepsaha07/Word-Reference-Maker/issues" target="_blank">
+      Open a support issue
+    </a>
   </p>
-  <ul>
-    <li>Visit the project on GitHub:
-      <br/>
-      <a href="https://github.com/deepsaha07/Word-Reference-Maker" target="_blank">
-        github.com/deepsaha07/Word-Reference-Maker
-      </a>
-    </li>
-    <li>Open a new issue with a short description and (if possible) screenshots.</li>
-  </ul>
+</div>
 
+<div class="box">
   <h2>Basic Troubleshooting</h2>
+
+  <h3>1. Add-in does not load</h3>
   <ul>
-    <li>Try closing and re-opening the WordRef task pane.</li>
-    <li>Click <code>Reload</code> inside the add-in.</li>
-    <li>Restart Word if things get stuck.</li>
+    <li>Close and reopen the WordRef task pane.</li>
+    <li>Restart Microsoft Word completely.</li>
+    <li>Check that you are connected to the internet.</li>
+    <li>Ensure Microsoft Word is updated to the latest version.</li>
   </ul>
+
+  <h3>2. Buttons are not responding</h3>
+  <ul>
+    <li>Click the <strong>Reload</strong> button inside the add-in.</li>
+    <li>Wait a few seconds after opening the task pane before clicking buttons.</li>
+    <li>Reopen the document and try again.</li>
+  </ul>
+
+  <h3>3. Citation was not inserted</h3>
+  <ul>
+    <li>Make sure the cursor is placed inside the document body before inserting citations.</li>
+    <li>Avoid inserting citations inside headers, footers, or protected sections.</li>
+    <li>Try clicking directly into a paragraph and insert again.</li>
+  </ul>
+
+  <h3>4. Bibliography is not updating</h3>
+  <ul>
+    <li>Click the <strong>Update Bibliography</strong> button.</li>
+    <li>Ensure at least one citation exists in the document.</li>
+    <li>Try changing the citation style and updating again.</li>
+  </ul>
+
+  <h3>5. Imported BibTeX is not recognised</h3>
+  <ul>
+    <li>Ensure the BibTeX format is valid and starts with entries such as <code>@article{}</code> or <code>@inproceedings{}</code>.</li>
+    <li>Remove unsupported or malformed fields if parsing fails.</li>
+    <li>Try importing one BibTeX entry at a time to isolate formatting issues.</li>
+  </ul>
+
+  <h3>6. Duplicate references detected</h3>
+  <ul>
+    <li>WordRef automatically skips duplicate citation keys.</li>
+    <li>Ensure imported entries use unique BibTeX citation keys.</li>
+  </ul>
+
+  <h3>7. Add-in appears blank or frozen</h3>
+  <ul>
+    <li>Close the task pane and reopen it from the Word ribbon.</li>
+    <li>Restart Microsoft Word.</li>
+    <li>Clear Office cache if the issue persists.</li>
+  </ul>
+
+  <h3>8. Export or import is not working</h3>
+  <ul>
+    <li>Check browser or Office permissions for downloads.</li>
+    <li>Ensure the selected import file is valid JSON, CSV, XML, or BibTeX.</li>
+    <li>Try exporting again after reloading the add-in.</li>
+  </ul>
+
+  <h3>9. Microsoft Word compatibility</h3>
+  <ul>
+    <li>WordRef is designed for Microsoft Word with Office Add-ins support.</li>
+    <li>Some older desktop versions may not fully support advanced citation controls.</li>
+  </ul>
+
+  <h3>10. Still need help?</h3>
+  <p>
+    Contact support via email or open an issue on GitHub with:
+  </p>
+
+  <ul>
+    <li>A short description of the issue</li>
+    <li>Steps to reproduce the problem</li>
+    <li>Screenshots if available</li>
+    <li>Your Microsoft Word platform/version</li>
+  </ul>
+</div>
+
+<div class="box">
+  <h2>Project Information</h2>
+
+  <p>
+    GitHub repository:
+    <a href="https://github.com/deepsaha07/Word-Reference-Maker" target="_blank">
+      github.com/deepsaha07/Word-Reference-Maker
+    </a>
+  </p>
+</div>
+
 </body>
 </html>
