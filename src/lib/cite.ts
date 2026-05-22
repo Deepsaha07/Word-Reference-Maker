@@ -162,18 +162,21 @@ export async function updateBibliography(
     try {
       const rng = bibCC.getRange();
       const paras = rng.paragraphs;
-      paras.load("items/font");
+    
+      paras.load("items");
       await ctx.sync();
-
+    
       for (const p of paras.items) {
         if (opts?.fontName) p.font.name = opts.fontName;
-        if (opts?.fontSize) p.font.size = opts.fontSize;
-        if (opts?.color)    p.font.color = opts.color;        // NEW: color
-        if (opts?.alignment) (p as any).alignment = opts.alignment;
-        if (opts?.lineSpacing) (p as any).lineSpacing = opts.lineSpacing; // best-effort
+        if (opts?.fontSize !== undefined) p.font.size = opts.fontSize;
+        if (opts?.color) p.font.color = opts.color;
+        if (opts?.alignment !== undefined) p.alignment = opts.alignment;
+        if (opts?.lineSpacing !== undefined) p.lineSpacing = opts.lineSpacing;
       }
-    } catch {
-      // ignore if host doesn’t expose these setters
+    
+      await ctx.sync();
+    } catch (err) {
+      console.error("[WordRef] Bibliography formatting failed:", err);
     }
 
     await ctx.sync();

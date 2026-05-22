@@ -96,24 +96,27 @@ function uniqueInOrder(ids: string[]): string[] {
 /** Re-scan doc order → save order → rerender all in-text → rebuild bibliography. */
 async function refreshNumbersAndBibliography(): Promise<void> {
   const style = getStyle();
-  const lib   = await getLibrary();
+  const lib = await getLibrary();
+  const opts = getBibFormatOpts();
 
-  // 1) Get IDs in true document order (singles + groups expanded)
-  const idsInDoc   = await getAllCitationIdsInDoc(); // e.g., ["A","B","B","C","A",...]
-  const uniqueOrder = uniqueInOrder(idsInDoc);       // ["A","B","C",...]
+  console.log("[WordRef] refreshNumbersAndBibliography style:", style);
+  console.log("[WordRef] refreshNumbersAndBibliography opts:", opts);
 
-  // 2) Store first-appearance order
+  const idsInDoc = await getAllCitationIdsInDoc();
+  const uniqueOrder = uniqueInOrder(idsInDoc);
+
   await setCitedOrder(uniqueOrder);
 
-  // 3) Re-render every in-text citation using the unique order for indices
   await rerenderAllCitations(style, uniqueOrder, lib);
 
-  // 4) Bibliography = unique cited entries in that order
   const cited = uniqueOrder
     .map(id => lib[id])
     .filter(Boolean);
 
-  await updateBibliography(cited, style, getBibFormatOpts());
+  console.log("[WordRef] cited bibliography entries:", cited.length);
+
+  await updateBibliography(cited, style, opts);
+
   await refreshCitedBibtexPanel();
 }
 
@@ -323,6 +326,17 @@ async function guard<T>(label: string, fn: () => Promise<T>): Promise<T | undefi
 Office.onReady(async (info) => {
   console.log("[WordReff] Office ready:", info);
 
+  const introBtn = document.getElementById("introMinimizeBtn");
+  const introContent = document.getElementById("introContent");
+
+  introBtn?.addEventListener("click", () => {
+    if (!introContent) return;
+
+    const hidden = introContent.style.display === "none";
+
+    introContent.style.display = hidden ? "block" : "none";
+    introBtn.textContent = hidden ? "−" : "+";
+  });
   try {
     const bind = (id: string, label: string, fn: () => Promise<any>) => {
       const el = $(id);
@@ -369,6 +383,7 @@ Office.onReady(async (info) => {
         showToast("WordRef panel reloaded.");
       });
     });
+
 
     const openImportModal = () => {
       document.getElementById("importModal")?.classList.remove("hidden");
@@ -993,12 +1008,30 @@ async function deleteAllWordRefContentControlsEverywhere(): Promise<void> {
 }
 
 async function onUpdateBib() {
+  console.log("[WordRef] onUpdateBib started");
+
   try {
+    const opts = getBibFormatOpts();
+
+    console.log("[WordRef] Current style:", getStyle());
+    console.log("[WordRef] Bibliography format options:", opts);
+
     await refreshNumbersAndBibliography();
+
+    console.log("[WordRef] refreshNumbersAndBibliography completed");
+
     await rerenderGroupCitations(getStyle());
+
+    console.log("[WordRef] rerenderGroupCitations completed");
+
+    showToast("Bibliography updated.");
   } catch (err: any) {
-    console.error("updateBibliography failed", err);
-    const info = (err && err.debugInfo) ? JSON.stringify(err.debugInfo) : String(err);
+    console.error("[WordRef] updateBibliography failed", err, err?.debugInfo);
+
+    const info = err?.debugInfo
+      ? JSON.stringify(err.debugInfo)
+      : String(err);
+
     showToast("Update bibliography failed. " + info);
   }
 }
