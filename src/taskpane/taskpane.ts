@@ -290,9 +290,7 @@ async function mergeAdjacentCitationsInParagraph(): Promise<void> {
 }
 
 // ====== Global error diagnostics and safe wrappers ======
-try {
-  OfficeExtension.config.extendedErrorLogging = true;
-} catch {}
+
 
 // Log all unhandled rejections / runtime errors for debugging
 window.addEventListener("unhandledrejection", (e) => {
@@ -324,6 +322,12 @@ async function guard<T>(label: string, fn: () => Promise<T>): Promise<T | undefi
 
 Office.onReady(async (info) => {
   console.log("[WordReff] Office ready:", info);
+
+  try {
+
+    OfficeExtension.config.extendedErrorLogging = true;
+
+  } catch {}
 
   try {
     console.log("[WordReff] Binding buttons");
