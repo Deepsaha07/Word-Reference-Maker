@@ -1,10 +1,10 @@
 /// <reference types="office-js" />
 
-const LIB_KEY = "wordref.library";
-const ORDER_KEY = "wordref.citedOrder";
+const LIB_KEY = "wordreff.library";
+const ORDER_KEY = "wordreff.citedOrder";
 
-const DOC_NS = "https://wordref.local/schema/1.0";
-const DOC_ROOT = "wordref-data";
+const DOC_NS = "https://wordreff.local/schema/1.0";
+const DOC_ROOT = "wordreff-data";
 
 type WordRefDocData = {
   version: string;
@@ -143,7 +143,7 @@ async function readDocumentData(): Promise<WordRefDocData | null> {
       return parseXmlPayload(xmlResult.value);
     });
   } catch (e) {
-    console.warn("[WordRef] Could not read document storage:", e);
+    console.warn("[WordReff] Could not read document storage:", e);
     return null;
   }
 }
@@ -167,7 +167,7 @@ async function writeDocumentData(data: WordRefDocData): Promise<void> {
       parts.load("items");
       await ctx.sync();
 
-      // Remove old WordRef data parts to avoid duplicates.
+      // Remove old WordReff data parts to avoid duplicates.
       for (const part of parts.items) {
         part.delete();
       }
@@ -176,7 +176,7 @@ async function writeDocumentData(data: WordRefDocData): Promise<void> {
       await ctx.sync();
     });
   } catch (e) {
-    console.warn("[WordRef] Could not write document storage:", e);
+    console.warn("[WordReff] Could not write document storage:", e);
   }
 }
 
@@ -285,7 +285,7 @@ export async function clearLibrary(): Promise<void> {
   await writeData(data);
 }
 
-/* Optional: use only if you want to fully wipe WordRef from local fallback too */
+/* Optional: use only if you want to fully wipe WordReff from local fallback too */
 export async function clearAllStorage(): Promise<void> {
   await clearFallbackData();
 
@@ -304,6 +304,6 @@ export async function clearAllStorage(): Promise<void> {
       await ctx.sync();
     });
   } catch (e) {
-    console.warn("[WordRef] Could not clear document storage:", e);
+    console.warn("[WordReff] Could not clear document storage:", e);
   }
 }

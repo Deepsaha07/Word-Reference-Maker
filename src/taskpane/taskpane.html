@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>WordRef</title>
+  <title>WordReff</title>
 
   <link rel="stylesheet" href="./taskpane.css" />
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
@@ -15,7 +15,7 @@
 <body>
   <!-- Header -->
   <div class="app-header">
-    <h2 class="app-title">WordRef</h2>
+    <h2 class="app-title">WordReff</h2>
     <div class="help-wrap">
       <button id="helpIcon" class="help-icon" title="Instructions">i</button>
       <span id="helpText" class="help-text">Instructions</span>
@@ -26,24 +26,117 @@
   <div id="instructionsModal" class="backdrop" role="dialog" aria-modal="true" aria-labelledby="instTitle">
     <div class="modal">
       <div class="modal-header">
-        <div id="instTitle" class="modal-title">How to use WordRef</div>
+        <div id="instTitle" class="modal-title">How to use WordReff</div>
         <button id="closeInstructions" class="modal-close" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <ol>
-          <li>Search your paper on <strong>Google Scholar</strong>.</li>
-          <li>Click <em>Cite</em>, then choose <em>BibTeX</em>.</li>
-          <li>Paste the BibTeX below and click <strong>Add</strong> (or <strong>Add &amp; Cite</strong>).</li>
-          <li>Re-use items via the <strong>Cite</strong> button in results.</li>
-          <li>Change citation style anytime; in-text &amp; bibliography update.</li>
-          <li>Format the bibliography (font, size, spacing, alignment, color) below.</li>
-        </ol>
+
+        <div class="guide-section">
+          <div class="guide-heading">Quick Start</div>
+      
+          <div class="guide-step">
+            <div class="guide-num">1</div>
+            <div>
+              Search a paper on <strong>Google Scholar</strong> or another academic source.
+            </div>
+          </div>
+      
+          <div class="guide-step">
+            <div class="guide-num">2</div>
+            <div>
+              Click <strong>Cite</strong> → choose <strong>BibTeX</strong>.
+            </div>
+          </div>
+      
+          <div class="guide-step">
+            <div class="guide-num">3</div>
+            <div>
+              Paste the BibTeX entry into WordReff.
+            </div>
+          </div>
+      
+          <div class="guide-step">
+            <div class="guide-num">4</div>
+            <div>
+              Click <strong>Add</strong> to save it, or <strong>Add &amp; Cite</strong> to instantly insert the citation into Word.
+            </div>
+          </div>
+        </div>
+      
+        <div class="guide-section">
+          <div class="guide-heading">Library & Citations</div>
+      
+          <ul class="guide-list">
+            <li>Use the <strong>Search</strong> bar to quickly find saved references.</li>
+            <li>Click <strong>Cite</strong> beside a saved entry to reuse it anywhere in the document.</li>
+            <li>Select multiple citations and use <strong>Merge citations</strong> for grouped references.</li>
+            <li>Use <strong>Unmerge citations</strong> to separate grouped citations again.</li>
+          </ul>
+        </div>
+      
+        <div class="guide-section">
+          <div class="guide-heading">Bibliography & Styles</div>
+      
+          <ul class="guide-list">
+            <li>Change citation styles anytime using the style dropdown.</li>
+            <li>Supported styles include <strong>APA, IEEE, Harvard, ACS,</strong> and <strong>Vancouver</strong>.</li>
+            <li>Click <strong>Update bibliography</strong> to refresh all citations and references.</li>
+            <li>Customize bibliography font, size, spacing, alignment, and color.</li>
+          </ul>
+        </div>
+      
+        <div class="guide-tip">
+          💡 WordReff automatically keeps citation numbering and bibliography ordering synchronized across your document.
+        </div>
+      
       </div>
     </div>
   </div>
 
   <!-- Main pane -->
   <div class="pane">
+
+    <div class="intro-box">
+
+      <div class="intro-header">
+        <div class="intro-title">
+          Smart citation management directly inside Microsoft Word
+        </div>
+    
+        <button id="introMinimizeBtn" class="intro-min-btn" title="Hide intro">
+          −
+        </button>
+      </div>
+    
+      <div id="introContent">
+    
+        <div class="intro-text">
+          WordReff lets you paste BibTeX from Google Scholar, store references,
+          insert citations, merge citations, and automatically generate formatted
+          bibliographies without leaving Word.
+        </div>
+    
+        <div class="intro-steps">
+          <div class="intro-step">
+            <strong>1.</strong> Copy BibTeX from Google Scholar
+          </div>
+    
+          <div class="intro-step">
+            <strong>2.</strong> Paste it into WordReff
+          </div>
+    
+          <div class="intro-step">
+            <strong>3.</strong> Click <b>Add &amp; Cite</b> to insert citations instantly
+          </div>
+        </div>
+    
+        <div class="intro-note">
+          Supports APA, IEEE, Harvard, ACS, and Vancouver citation styles.
+        </div>
+    
+      </div>
+    </div>
+  
     <textarea id="bibtexInput" placeholder="Paste BibTeX entry here…"></textarea>
 
     <div id="noteInputs">
@@ -185,5 +278,8 @@
   </div>
 
   <!-- ===== Dialog mode (when opened as #download-dialog) ===== -->
+ 
+  <!--<script type="module" src="./taskpane.js"></script> -->
+
 </body>
 </html>

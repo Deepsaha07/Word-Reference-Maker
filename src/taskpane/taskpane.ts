@@ -25,8 +25,8 @@ const {
   rerenderAllCitations,
 } = Cite;
 
-const GROUP_PREFIX = "wordref-group:";
-const GROUP_TITLE  = "WordRef Citation (Group)";
+const GROUP_PREFIX = "wordreff-group:";
+const GROUP_TITLE  = "WordReff Citation (Group)";
 /* ============= Types & helpers ============= */
 
 type BibEntry = Bib.BibEntry;
@@ -99,8 +99,8 @@ async function refreshNumbersAndBibliography(): Promise<void> {
   const lib = await getLibrary();
   const opts = getBibFormatOpts();
 
-  console.log("[WordRef] refreshNumbersAndBibliography style:", style);
-  console.log("[WordRef] refreshNumbersAndBibliography opts:", opts);
+  console.log("[WordReff] refreshNumbersAndBibliography style:", style);
+  console.log("[WordReff] refreshNumbersAndBibliography opts:", opts);
 
   const idsInDoc = await getAllCitationIdsInDoc();
   const uniqueOrder = uniqueInOrder(idsInDoc);
@@ -113,7 +113,7 @@ async function refreshNumbersAndBibliography(): Promise<void> {
     .map(id => lib[id])
     .filter(Boolean);
 
-  console.log("[WordRef] cited bibliography entries:", cited.length);
+  console.log("[WordReff] cited bibliography entries:", cited.length);
 
   await updateBibliography(cited, style, opts);
 
@@ -147,7 +147,7 @@ function compressNumericList(nums: number[]): string {
   return out.join(",");
 }
 
-/** Scan both single and group WordRef CCs in true document order (may include duplicates). */
+/** Scan both single and group WordReff CCs in true document order (may include duplicates). */
 async function scanCitationsEverywhere(): Promise<string[]> {
   let result: string[] = [];
 
@@ -156,7 +156,7 @@ async function scanCitationsEverywhere(): Promise<string[]> {
     const items: Item[] = [];
 
     // Singles
-    const singles = ctx.document.contentControls.getByTitle("WordRef Citation");
+    const singles = ctx.document.contentControls.getByTitle("WordReff Citation");
     singles.load("items/tag,items/id");
     // Groups
     const groups = ctx.document.contentControls.getByTitle(GROUP_TITLE);
@@ -166,8 +166,8 @@ async function scanCitationsEverywhere(): Promise<string[]> {
 
     for (const cc of singles.items) {
       const tag = cc.tag || "";
-      if (!tag.startsWith("wordref-cite:")) continue;
-      const id = tag.slice("wordref-cite:".length).trim();
+      if (!tag.startsWith("wordreff-cite:")) continue;
+      const id = tag.slice("wordreff-cite:".length).trim();
       if (!id) continue;
       items.push({ ids: [id], start: cc.getRange("Start") });
     }
@@ -206,7 +206,7 @@ async function scanCitationsEverywhere(): Promise<string[]> {
   return result;
 }
 /**
- * Merge adjacent WordRef citation content controls per paragraph.
+ * Merge adjacent WordReff citation content controls per paragraph.
  * Numeric styles → “[2–4,6]”; Text styles → “(Smith, 2019; Lee & Kim, 2020)”.
  */
 async function mergeAdjacentCitationsInParagraph(): Promise<void> {
@@ -216,7 +216,7 @@ async function mergeAdjacentCitationsInParagraph(): Promise<void> {
   await Word.run(async (ctx) => {
     const doc = ctx.document;
 
-    const allCcs = doc.contentControls.getByTitle("WordRef Citation");
+    const allCcs = doc.contentControls.getByTitle("WordReff Citation");
     allCcs.load("items/tag,items/id,items/paragraphs");
     await ctx.sync();
 
@@ -225,7 +225,7 @@ async function mergeAdjacentCitationsInParagraph(): Promise<void> {
 
     for (const cc of allCcs.items) {
       const tag = (cc.tag || "");
-      if (!tag.startsWith("wordref-cite:")) continue;
+      if (!tag.startsWith("wordreff-cite:")) continue;
 
       const start = cc.getRange("Start");
       const para = cc.paragraphs.getFirst();
@@ -257,7 +257,7 @@ async function mergeAdjacentCitationsInParagraph(): Promise<void> {
       if (sorted.length < 2) continue;
 
       const run = sorted;
-      const ids = run.map(({ tag }) => tag.replace("wordref-cite:", ""));
+      const ids = run.map(({ tag }) => tag.replace("wordreff-cite:", ""));
       const order = await getCitedOrder();
 
       if (numericLike) {
@@ -316,7 +316,7 @@ async function guard<T>(label: string, fn: () => Promise<T>): Promise<T | undefi
     return await fn();
   } catch (err: any) {
     const dbg = err?.debugInfo ? ` [${err.debugInfo.code || ""} @ ${err.debugInfo.errorLocation || ""}]` : "";
-    console.error(`[WordRef] ${label} failed:`, err, err?.debugInfo);
+    console.error(`[WordReff] ${label} failed:`, err, err?.debugInfo);
     showToast(`${label} failed: ${(err?.message || String(err))}${dbg}`);
     return undefined;
   }
@@ -380,7 +380,7 @@ Office.onReady(async (info) => {
         await refreshResults("");
         updateStyleBadge();
 
-        showToast("WordRef panel reloaded.");
+        showToast("WordReff panel reloaded.");
       });
     });
 
@@ -548,8 +548,8 @@ async function simpleInsert(e: BibEntry, style: string) {
 
     const insertContentControlCitation = async (range: Word.Range) => {
       const cc = range.insertContentControl();
-      cc.tag = `wordref-cite:${e.id}`;
-      cc.title = "WordRef Citation";
+      cc.tag = `wordreff-cite:${e.id}`;
+      cc.title = "WordReff Citation";
 
       // BoundingBox causes ghost-box issues in Word Web, so use it only on desktop.
       cc.appearance = "BoundingBox";
@@ -569,7 +569,7 @@ async function simpleInsert(e: BibEntry, style: string) {
 
       return;
     } catch (err) {
-      console.warn("[WordRef] selection insert failed; appending at document end", err);
+      console.warn("[WordReff] selection insert failed; appending at document end", err);
     }
 
     const fallbackPara = body.insertParagraph("", Word.InsertLocation.end);
@@ -665,7 +665,7 @@ async function onAddOnly() {
   await refreshResults("");
 }
 
-/** When the user clicks inside a WordRef citation, jump to its bibliography entry. */
+/** When the user clicks inside a WordReff citation, jump to its bibliography entry. */
 async function onSelectionChanged(): Promise<void> {
   await guard("Selection change", async () => {
     await Word.run(async (ctx) => {
@@ -691,10 +691,10 @@ async function onSelectionChanged(): Promise<void> {
       const tag   = parent.tag || "";
       const title = parent.title || "";
 
-      // Decide if this is a WordRef single or group citation
+      // Decide if this is a WordReff single or group citation
       let ids: string[] = [];
-      if (title === "WordRef Citation" && tag.startsWith("wordref-cite:")) {
-        ids = [tag.slice("wordref-cite:".length).trim()];
+      if (title === "WordReff Citation" && tag.startsWith("wordreff-cite:")) {
+        ids = [tag.slice("wordreff-cite:".length).trim()];
       } else if (title === GROUP_TITLE && tag.startsWith(GROUP_PREFIX)) {
         ids = tag
           .slice(GROUP_PREFIX.length)
@@ -896,7 +896,7 @@ async function onResetNumbering() {
 
 async function onClearLibraryClick() {
   const ok = await askConfirm(
-    "Clear ENTIRE library and numbering? This removes all in-document WordRef citations and resets your library. This cannot be undone."
+    "Clear ENTIRE library and numbering? This removes all in-document WordReff citations and resets your library. This cannot be undone."
   );
   if (!ok) return;
 
@@ -908,16 +908,16 @@ async function onClearLibraryClick() {
     });
   } catch {}
 
-  // 1) Delete all WordRef content controls everywhere (body + headers/footers)
+  // 1) Delete all WordReff content controls everywhere (body + headers/footers)
   try {
-    await deleteAllWordRefContentControlsEverywhere();
+    await deleteAllWordReffContentControlsEverywhere();
   } catch (e) {
-    console.warn("[WordRef] deleteAllWordRefContentControlsEverywhere failed:", e);
+    console.warn("[WordReff] deleteAllWordReffContentControlsEverywhere failed:", e);
   }
 
   // 2) Clear storage last, so we still know tags while deleting
-  try { await clearLibrary(); } catch (e) { console.warn("[WordRef] clearLibrary failed:", e); }
-  try { await clearCitedOrder(); } catch (e) { console.warn("[WordRef] clearCitedOrder failed:", e); }
+  try { await clearLibrary(); } catch (e) { console.warn("[WordReff] clearLibrary failed:", e); }
+  try { await clearCitedOrder(); } catch (e) { console.warn("[WordReff] clearCitedOrder failed:", e); }
 
   // 3) Rebuild an empty bibliography (guard against selection/CC issues)
   try {
@@ -927,7 +927,7 @@ async function onClearLibraryClick() {
     });
     await updateBibliography([], getStyle());
   } catch (e) {
-    console.warn("[WordRef] updateBibliography([]) failed (non-fatal):", e);
+    console.warn("[WordReff] updateBibliography([]) failed (non-fatal):", e);
   }
 
   // 4) UI refresh
@@ -937,9 +937,9 @@ async function onClearLibraryClick() {
   showToast("Library and in-document citations cleared.");
 }
 
-/** Delete all WordRef citation CCs in body + headers/footers, even if cannotDelete is true. */
-/** Delete all WordRef citation CCs in body + headers/footers, even if cannotDelete is true. */
-async function deleteAllWordRefContentControlsEverywhere(): Promise<void> {
+/** Delete all WordReff citation CCs in body + headers/footers, even if cannotDelete is true. */
+/** Delete all WordReff citation CCs in body + headers/footers, even if cannotDelete is true. */
+async function deleteAllWordReffContentControlsEverywhere(): Promise<void> {
   await Word.run(async (ctx) => {
     // Collect victims from the document BODY first
     const bodyCcs = ctx.document.contentControls;
@@ -950,19 +950,19 @@ async function deleteAllWordRefContentControlsEverywhere(): Promise<void> {
 
     const victims: Word.ContentControl[] = [];
 
-    // Helper: push WordRef CCs from a content-control collection into victims
-    const pushWordRef = (ccs: Word.ContentControlCollection) => {
+    // Helper: push WordReff CCs from a content-control collection into victims
+    const pushWordReff = (ccs: Word.ContentControlCollection) => {
       ccs.load("items/tag,items/id,items/cannotDelete");
       return ccs;
     };
 
     // BODY victims
-    pushWordRef(bodyCcs);
+    pushWordReff(bodyCcs);
     await ctx.sync();
     victims.push(
       ...bodyCcs.items.filter((cc) => {
         const t = cc.tag || "";
-        return t.startsWith("wordref-cite:") || t.startsWith("wordref-group:");
+        return t.startsWith("wordreff-cite:") || t.startsWith("wordreff-group:");
       })
     );
 
@@ -979,12 +979,12 @@ async function deleteAllWordRefContentControlsEverywhere(): Promise<void> {
           const h = sec.getHeader(ht);
           const hRange = h.getRange();
           const hCcs = hRange.contentControls;
-          pushWordRef(hCcs);
+          pushWordReff(hCcs);
           await ctx.sync();
           victims.push(
             ...hCcs.items.filter((cc) => {
               const t = cc.tag || "";
-              return t.startsWith("wordref-cite:") || t.startsWith("wordref-group:");
+              return t.startsWith("wordreff-cite:") || t.startsWith("wordreff-group:");
             })
           );
         } catch { /* header might not exist; ignore */ }
@@ -994,12 +994,12 @@ async function deleteAllWordRefContentControlsEverywhere(): Promise<void> {
           const f = sec.getFooter(ht);
           const fRange = f.getRange();
           const fCcs = fRange.contentControls;
-          pushWordRef(fCcs);
+          pushWordReff(fCcs);
           await ctx.sync();
           victims.push(
             ...fCcs.items.filter((cc) => {
               const t = cc.tag || "";
-              return t.startsWith("wordref-cite:") || t.startsWith("wordref-group:");
+              return t.startsWith("wordreff-cite:") || t.startsWith("wordreff-group:");
             })
           );
         } catch { /* footer might not exist; ignore */ }
@@ -1021,32 +1021,32 @@ async function deleteAllWordRefContentControlsEverywhere(): Promise<void> {
         try { cc.delete(true); } catch { cc.delete(false); }
         await ctx.sync();
       } catch (e) {
-        console.warn("[WordRef] CC delete failed for id", cc.id, e);
+        console.warn("[WordReff] CC delete failed for id", cc.id, e);
       }
     }
   });
 }
 
 async function onUpdateBib() {
-  console.log("[WordRef] onUpdateBib started");
+  console.log("[WordReff] onUpdateBib started");
 
   try {
     const opts = getBibFormatOpts();
 
-    console.log("[WordRef] Current style:", getStyle());
-    console.log("[WordRef] Bibliography format options:", opts);
+    console.log("[WordReff] Current style:", getStyle());
+    console.log("[WordReff] Bibliography format options:", opts);
 
     await refreshNumbersAndBibliography();
 
-    console.log("[WordRef] refreshNumbersAndBibliography completed");
+    console.log("[WordReff] refreshNumbersAndBibliography completed");
 
     await rerenderGroupCitations(getStyle());
 
-    console.log("[WordRef] rerenderGroupCitations completed");
+    console.log("[WordReff] rerenderGroupCitations completed");
 
     showToast("Bibliography updated.");
   } catch (err: any) {
-    console.error("[WordRef] updateBibliography failed", err, err?.debugInfo);
+    console.error("[WordReff] updateBibliography failed", err, err?.debugInfo);
 
     const info = err?.debugInfo
       ? JSON.stringify(err.debugInfo)
@@ -1131,11 +1131,11 @@ function libraryToXml(lib: Record<string, BibEntry>): string {
       .join("");
     return `<entry id="${esc(e.id)}">${fields}${notes}</entry>`;
   }).join("");
-  return `<?xml version="1.0" encoding="UTF-8"?><wordref>${entries}</wordref>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><wordreff>${entries}</wordreff>`;
 }
 
 function sanitizeFileName(s: string): string {
-  return (s || "").replace(/[\\/:*?"<>|]/g, "").trim() || "wordref-library";
+  return (s || "").replace(/[\\/:*?"<>|]/g, "").trim() || "wordreff-library";
 }
 function platformDownloadHint(): string {
   const p = Office?.context?.platform;
@@ -1231,7 +1231,7 @@ async function onExportLibrary() {
   else { data = JSON.stringify(lib, null, 2); }
 
   const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
-  const filename = sanitizeFileName(`wordref-library-${stamp}.${ext}`);
+  const filename = sanitizeFileName(`wordreff-library-${stamp}.${ext}`);
 
   const isWin = Office?.context?.platform === Office.PlatformType.PC;
   const isWeb = Office?.context?.platform === Office.PlatformType.OfficeOnline;
@@ -1492,8 +1492,8 @@ async function getAllCitationIdsInDoc(): Promise<string[]> {
       if (!tag) continue;
 
       // Single citation
-      if (title === "WordRef Citation" && tag.startsWith("wordref-cite:")) {
-        const id = tag.slice("wordref-cite:".length).trim();
+      if (title === "WordReff Citation" && tag.startsWith("wordreff-cite:")) {
+        const id = tag.slice("wordreff-cite:".length).trim();
         if (!id) continue;
         const start = cc.getRange("Start");
         items.push({ ids: [id], start });
@@ -1619,7 +1619,7 @@ async function onImportFilePicked(ev: Event): Promise<void> {
   }
 }
 
-const BIB_BOOKMARK = "_WORDREF_BIB";
+const BIB_BOOKMARK = "_WORDREFF_BIB";
 
 async function onUnmergeSelectedCitation(): Promise<void> {
   const style = getStyle();
@@ -1702,11 +1702,11 @@ async function onUnmergeSelectedCitation(): Promise<void> {
           ccRange.insertText(formatInText(lib[id], style, order.indexOf(id) + 1), Word.InsertLocation.replace);
         } else {
           const cc = ccRange.insertContentControl();
-          cc.title = "WordRef Citation";
-          cc.tag = `wordref-cite:${id}`;
+          cc.title = "WordReff Citation";
+          cc.tag = `wordreff-cite:${id}`;
           cc.appearance = "BoundingBox";
         }
-        //cc.title      = "WordRef Citation";
+        //cc.title      = "WordReff Citation";
        
 
         cursor = nextCursor;
@@ -1812,7 +1812,7 @@ async function refreshCitedBibtexPanel(): Promise<void> {
   box.value = await buildCitedBibtex();
 }
 
-/** Delete all WordRef citation content controls ([single] and [group]) from the document. */
+/** Delete all WordReff citation content controls ([single] and [group]) from the document. */
 async function deleteAllCitationControls(): Promise<void> {
   await Word.run(async (ctx) => {
     const ccs = ctx.document.contentControls;
@@ -1821,7 +1821,7 @@ async function deleteAllCitationControls(): Promise<void> {
 
     const victims = ccs.items.filter(cc => {
       const t = cc.tag || "";
-      return t.startsWith("wordref-cite:") || t.startsWith("wordref-group:");
+      return t.startsWith("wordreff-cite:") || t.startsWith("wordreff-group:");
     });
 
     for (const v of victims) {
@@ -1997,7 +1997,7 @@ async function onMergeSelectedCitations(): Promise<void> {
 
       for (const cc of singles.items) {
         const tag = cc.tag || "";
-        if (!tag.startsWith("wordref-cite:")) continue;
+        if (!tag.startsWith("wordreff-cite:")) continue;
 
         const rStart = cc.getRange("Start");
         const rEnd = cc.getRange("End");
@@ -2012,7 +2012,7 @@ async function onMergeSelectedCitations(): Promise<void> {
       }
 
       if (picked.length < 2) {
-        showToast("Select two or more WordRef citations to merge.");
+        showToast("Select two or more WordReff citations to merge.");
         return;
       }
 
@@ -2032,9 +2032,9 @@ async function onMergeSelectedCitations(): Promise<void> {
         if (!placed) sorted.push(it);
       }
 
-      const ids = sorted.map(p => p.tag.replace("wordref-cite:", ""));
+      const ids = sorted.map(p => p.tag.replace("wordreff-cite:", ""));
       const mergedText = await renderMergedText(ids, style);
-      const groupTag = "wordref-group:" + ids.join(",");
+      const groupTag = "wordreff-group:" + ids.join(",");
 
       // Move caret away to avoid edit conflicts
       ctx.document.body.getRange("End").select();
@@ -2042,7 +2042,7 @@ async function onMergeSelectedCitations(): Promise<void> {
 
       // First CC becomes group
       const firstCC = sorted[0].cc;
-      firstCC.title = "WordRef Citation (Group)";
+      firstCC.title = "WordReff Citation (Group)";
       firstCC.tag = groupTag;
       firstCC.appearance = "BoundingBox";
       firstCC.insertText(mergedText, Word.InsertLocation.replace);

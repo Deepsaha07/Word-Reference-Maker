@@ -3,8 +3,8 @@
 import type * as Bib from "./bibtex"; // adjust path if needed
 type BibEntry = Bib.BibEntry;
 
-const LIB_KEY   = "wordrefLibraryV1";
-const ORDER_KEY = "wordrefCitedOrderV1";
+const LIB_KEY   = "wordreffLibraryV1";
+const ORDER_KEY = "wordreffCitedOrderV1";
 
 type Library = Record<string, BibEntry>;
 

@@ -105,7 +105,7 @@ export type BibFormatOptions = {
 
 // Helper: create/find the single bibliography CC after the “References” heading
 async function getOrCreateBibCC(ctx: Word.RequestContext, heading: Word.Paragraph): Promise<Word.ContentControl> {
-  const existing = ctx.document.contentControls.getByTag("wordref-bibliography");
+  const existing = ctx.document.contentControls.getByTag("wordreff-bibliography");
   existing.load("items");
   await ctx.sync();
 
@@ -114,8 +114,8 @@ async function getOrCreateBibCC(ctx: Word.RequestContext, heading: Word.Paragrap
   const afterHeading = heading.getRange("End");
   const p = afterHeading.insertParagraph("", Word.InsertLocation.after);
   const cc = p.insertContentControl();
-  cc.tag = "wordref-bibliography";
-  cc.title = "WordRef Bibliography";
+  cc.tag = "wordreff-bibliography";
+  cc.title = "WordReff Bibliography";
   return cc;
 }
 
@@ -198,7 +198,7 @@ export async function updateBibliography(
       body.insertParagraph(bibText, Word.InsertLocation.end);
       await ctx.sync();
     
-      console.warn("[WordRef] Word Web: bibliography inserted as plain text for compatibility.");
+      console.warn("[WordReff] Word Web: bibliography inserted as plain text for compatibility.");
       return;
     }
     // Desktop Word formatting path - unchanged behavior
@@ -219,7 +219,7 @@ export async function updateBibliography(
 
       await ctx.sync();
     } catch (err) {
-      console.error("[WordRef] Bibliography formatting failed:", err);
+      console.error("[WordReff] Bibliography formatting failed:", err);
     }
 
     await ctx.sync();
@@ -238,7 +238,7 @@ export async function scanCitationsInDoc(): Promise<string[]> {
     const ids: string[] = [];
     for (const cc of controls.items) {
       const tag = (cc.tag || "");
-      if (tag.startsWith("wordref-cite:")) {
+      if (tag.startsWith("wordreff-cite:")) {
         const id = tag.split(":")[1];
         if (id) ids.push(id);
       }
@@ -253,7 +253,7 @@ export async function rerenderAllCitations(style: string, order: string[], lib: 
     controls.load("items/tag");
     await ctx.sync();
 
-    const items = controls.items.filter(cc => (cc.tag || "").startsWith("wordref-cite:"));
+    const items = controls.items.filter(cc => (cc.tag || "").startsWith("wordreff-cite:"));
     for (const cc of items) {
       const id = (cc.tag || "").split(":")[1];
       const e = lib[id];
@@ -319,7 +319,7 @@ export async function mergeAdjacentCitationsInParagraph() {
     while (i < items.length) {
       // start a group if this is a wordref-cite
       const group: Word.ContentControl[] = [];
-      while (i < items.length && (items[i].tag || "").startsWith("wordref-cite:")) {
+      while (i < items.length && (items[i].tag || "").startsWith("wordreff-cite:")) {
         group.push(items[i]);
         i++;
       }
@@ -347,7 +347,7 @@ export async function mergeAdjacentCitationsInParagraph() {
       }
 
       // Skip non-citation CC or advance
-      while (i < items.length && !(items[i].tag || "").startsWith("wordref-cite:")) {
+      while (i < items.length && !(items[i].tag || "").startsWith("wordreff-cite:")) {
         i++;
       }
     }
@@ -357,7 +357,7 @@ export async function mergeAdjacentCitationsInParagraph() {
 
 /**
  * Insert citation at selection. For numeric styles, if the user inserts
- * *inside* an existing WordRef citation CC, we merge indices into one bracket
+ * *inside* an existing WordReff citation CC, we merge indices into one bracket
  * e.g. `[2]` + `[3,4]` → `[2, 3–4]`. For author–year styles we just replace text.
  */
 // cite.ts
@@ -374,7 +374,7 @@ export async function insertCitationControl(
   const isWordWeb =
     Office.context.platform === Office.PlatformType.OfficeOnline;
 
-  const dbg = (window as any).__WORDREF_DEBUG__ || {};
+  const dbg = (window as any).__WORDREFF_DEBUG__ || {};
   const FORCE_APPEND_END = !!dbg.FORCE_APPEND_END;
   const NO_CC_FALLBACK = dbg.NO_CONTENT_CONTROL_FALLBACK !== false;
   const SAFE_MODE_NO_MERGE = !!dbg.SAFE_MODE_NO_MERGE;
@@ -423,14 +423,14 @@ export async function insertCitationControl(
       }
     }
 
-    // Desktop only: merge if cursor is inside a WordRef citation.
+    // Desktop only: merge if cursor is inside a WordReff citation.
     if (!SAFE_MODE_NO_MERGE) {
       const parent = sel.parentContentControl;
 
       if (
         parent &&
         !parent.isNullObject &&
-        (parent.tag || "").startsWith("wordref-cite:") &&
+        (parent.tag || "").startsWith("wordreff-cite:") &&
         isNumeric &&
         typeof index === "number"
       ) {
@@ -447,7 +447,7 @@ export async function insertCitationControl(
       }
     }
 
-    // Desktop only: if just after a WordRef citation, merge with previous citation.
+    // Desktop only: if just after a WordReff citation, merge with previous citation.
     if (!SAFE_MODE_NO_MERGE && isNumeric && typeof index === "number") {
       try {
         const para = sel.paragraphs.getFirst();
@@ -459,7 +459,7 @@ export async function insertCitationControl(
         await ctx.sync();
 
         const items = all.items.filter((cc) =>
-          (cc.tag || "").startsWith("wordref-cite:")
+          (cc.tag || "").startsWith("wordreff-cite:")
         );
 
         for (const cc of items) {
@@ -488,8 +488,8 @@ export async function insertCitationControl(
     const tryCreateCC = async (range: Word.Range) => {
       try {
         const cc = range.insertContentControl();
-        cc.tag = `wordref-cite:${e.id}`;
-        cc.title = "WordRef Citation";
+        cc.tag = `wordreff-cite:${e.id}`;
+        cc.title = "WordReff Citation";
         cc.appearance = "BoundingBox";
         cc.insertText(text, Word.InsertLocation.replace);
         await ctx.sync();
@@ -511,7 +511,7 @@ export async function insertCitationControl(
       if (
         parent &&
         !parent.isNullObject &&
-        !(parent.tag || "").startsWith("wordref-cite:")
+        !(parent.tag || "").startsWith("wordreff-cite:")
       ) {
         const para = sel.paragraphs.getFirst();
         const afterPara = para
