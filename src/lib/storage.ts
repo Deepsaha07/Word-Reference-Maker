@@ -1,7 +1,8 @@
 /// <reference types="office-js" />
-
+import type { BibEntry } from "./bibtex";
 const LIB_KEY = "wordreff.library";
 const ORDER_KEY = "wordreff.citedOrder";
+const CITED_ORDER_KEY = "wordref.citedOrder";
 
 const DOC_NS = "https://wordreff.local/schema/1.0";
 const DOC_ROOT = "wordreff-data";
@@ -225,65 +226,113 @@ async function writeData(data: WordRefDocData): Promise<void> {
    Keep these names unchanged.
    ========================================================= */
 
-export async function getLibrary(): Promise<Record<string, any>> {
-  const data = await readData();
-  return data.library || {};
-}
+   function getSetting<T>(key: string, fallback: T): T {
 
-export async function saveLibrary(lib: Record<string, any>): Promise<void> {
-  const data = await readData();
-  data.library = lib || {};
-  await writeData(data);
-}
-
-export async function upsertEntry(entry: any): Promise<void> {
-  if (!entry?.id) return;
-
-  const data = await readData();
-  data.library = data.library || {};
-
-  data.library[entry.id] = {
-    ...(data.library[entry.id] || {}),
-    ...entry,
-  };
-
-  await writeData(data);
-}
-
-export async function getCitedOrder(): Promise<string[]> {
-  const data = await readData();
-  return data.citedOrder || [];
-}
-
-export async function setCitedOrder(ids: string[]): Promise<void> {
-  const data = await readData();
-  data.citedOrder = Array.isArray(ids) ? ids : [];
-  await writeData(data);
-}
-
-export async function markCited(id: string): Promise<void> {
-  if (!id) return;
-
-  const data = await readData();
-  data.citedOrder = data.citedOrder || [];
-
-  if (!data.citedOrder.includes(id)) {
-    data.citedOrder.push(id);
-    await writeData(data);
+    try {
+  
+      const value = Office.context.document.settings.get(key);
+  
+      if (!value) return fallback;
+  
+      if (typeof value === "string") {
+  
+        return JSON.parse(value) as T;
+  
+      }
+  
+      return value as T;
+  
+    } catch {
+  
+      return fallback;
+  
+    }
+  
   }
-}
-
-export async function clearCitedOrder(): Promise<void> {
-  const data = await readData();
-  data.citedOrder = [];
-  await writeData(data);
-}
-
-export async function clearLibrary(): Promise<void> {
-  const data = await readData();
-  data.library = {};
-  await writeData(data);
-}
+  
+  function setSetting(key: string, value: unknown): Promise<void> {
+  
+    Office.context.document.settings.set(key, JSON.stringify(value));
+  
+    return new Promise((resolve, reject) => {
+  
+      Office.context.document.settings.saveAsync((result) => {
+  
+        if (result.status === Office.AsyncResultStatus.Succeeded) {
+  
+          resolve();
+  
+        } else {
+  
+          reject(result.error);
+  
+        }
+  
+      });
+  
+    });
+  
+  }
+  
+  export async function getLibrary(): Promise<Record<string, BibEntry>> {
+  
+    return getSetting<Record<string, BibEntry>>(LIB_KEY, {});
+  
+  }
+  
+  export async function saveLibrary(lib: Record<string, BibEntry>): Promise<void> {
+  
+    await setSetting(LIB_KEY, lib);
+  
+  }
+  
+  export async function upsertEntry(entry: BibEntry): Promise<void> {
+  
+    const lib = await getLibrary();
+  
+    lib[entry.id] = entry;
+  
+    await saveLibrary(lib);
+  
+  }
+  
+  export async function clearLibrary(): Promise<void> {
+  
+    await saveLibrary({});
+  
+  }
+  
+  export async function getCitedOrder(): Promise<string[]> {
+  
+    return getSetting<string[]>(CITED_ORDER_KEY, []);
+  
+  }
+  
+  export async function setCitedOrder(order: string[]): Promise<void> {
+  
+    await setSetting(CITED_ORDER_KEY, order);
+  
+  }
+  
+  export async function markCited(id: string): Promise<void> {
+  
+    const order = await getCitedOrder();
+  
+    if (!order.includes(id)) {
+  
+      order.push(id);
+  
+      await setCitedOrder(order);
+  
+    }
+  
+  }
+  
+  export async function clearCitedOrder(): Promise<void> {
+  
+    await setCitedOrder([]);
+  
+  }
 
 /* Optional: use only if you want to fully wipe WordReff from local fallback too */
 export async function clearAllStorage(): Promise<void> {
