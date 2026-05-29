@@ -26,6 +26,48 @@ async function ensureSelectionAtEnd(): Promise<void> {
   });
 }
 
+function decodeLatex(value: string): string {
+  return String(value || "")
+    .replace(/\{\\'([A-Za-z])\}/g, (_, c) => {
+      const map: Record<string, string> = {
+        a: "á", e: "é", i: "í", o: "ó", u: "ú", y: "ý",
+        A: "Á", E: "É", I: "Í", O: "Ó", U: "Ú", Y: "Ý",
+        c: "ć", C: "Ć",
+      };
+      return map[c] || c;
+    })
+    .replace(/\{\\"([A-Za-z])\}/g, (_, c) => {
+      const map: Record<string, string> = {
+        a: "ä", e: "ë", i: "ï", o: "ö", u: "ü", y: "ÿ",
+        A: "Ä", E: "Ë", I: "Ï", O: "Ö", U: "Ü",
+      };
+      return map[c] || c;
+    })
+    .replace(/\{\\`([A-Za-z])\}/g, (_, c) => {
+      const map: Record<string, string> = {
+        a: "à", e: "è", i: "ì", o: "ò", u: "ù",
+        A: "À", E: "È", I: "Ì", O: "Ò", U: "Ù",
+      };
+      return map[c] || c;
+    })
+    .replace(/\{\\\^([A-Za-z])\}/g, (_, c) => {
+      const map: Record<string, string> = {
+        a: "â", e: "ê", i: "î", o: "ô", u: "û",
+        A: "Â", E: "Ê", I: "Î", O: "Ô", U: "Û",
+      };
+      return map[c] || c;
+    })
+    .replace(/\{\\~([A-Za-z])\}/g, (_, c) => {
+      const map: Record<string, string> = {
+        a: "ã", n: "ñ", o: "õ",
+        A: "Ã", N: "Ñ", O: "Õ",
+      };
+      return map[c] || c;
+    })
+    .replace(/--/g, "–")
+    .replace(/[{}]/g, "");
+}
+
 /* ================= in-text formatting ================= */
 
 export function formatInText(e: BibEntry, style: string, index: number): string {
@@ -42,25 +84,32 @@ export function formatInText(e: BibEntry, style: string, index: number): string 
 
 export function formatBibliographyEntry(e: BibEntry, style: string, index: number): string {
   const sty = normalizeStyle(style);
-  const a = e.fields.author || e.fields.editor || "Anon";
-  const y = e.fields.year || "n.d.";
-  const t = e.fields.title || "";
-  const j = e.fields.journal || e.fields.booktitle || "";
-  const v = e.fields.volume ? `${e.fields.volume}` : "";
-  const n = e.fields.number ? `(${e.fields.number})` : "";
-  const p = e.fields.pages ? `, ${e.fields.pages}` : "";
-  const doi = e.fields.doi ? ` https://doi.org/${e.fields.doi}` : "";
+
+  const a = decodeLatex(e.fields.author || e.fields.editor || "Anon");
+  const y = decodeLatex(e.fields.year || "n.d.");
+  const t = decodeLatex(e.fields.title || "");
+  const j = decodeLatex(e.fields.journal || e.fields.booktitle || "");
+  const v = decodeLatex(e.fields.volume ? `${e.fields.volume}` : "");
+  const nRaw = decodeLatex(e.fields.number ? `${e.fields.number}` : "");
+  const n = nRaw ? `(${nRaw})` : "";
+  const pagesRaw = decodeLatex(e.fields.pages || "");
+  const p = pagesRaw ? `, ${pagesRaw}` : "";
+  const doi = e.fields.doi ? ` https://doi.org/${decodeLatex(e.fields.doi)}` : "";
 
   switch (sty) {
     case "ieee":
     case "numeric":
       return `[${index}] ${a}. “${t},” ${j} ${v}${n}${p}, ${y}.${doi}`;
+
     case "vancouver":
-      return `${index}. ${a}. ${t}. ${j} ${y}${v ? `;${v}` : ""}${n ? `(${n})` : ""}${p ? `:${p.replace(", ", "-").replace(/^, /, "")}` : ""}.`;
+      return `${index}. ${a}. ${t}. ${j} ${y}${v ? `;${v}` : ""}${nRaw ? `(${nRaw})` : ""}${pagesRaw ? `:${pagesRaw}` : ""}.`;
+
     case "harvard":
       return `${a}, ${y}. ${t}. ${j}${v ? `, ${v}` : ""}${n ? ` ${n}` : ""}${p}.`;
+
     case "acs":
       return `${a}. ${t}. ${j} ${y}${v ? `, ${v}` : ""}${n ? ` ${n}` : ""}${p}.`;
+
     case "apa":
     default:
       return `${a} (${y}). ${t}. ${j}${v ? `, ${v}` : ""}${n ? ` ${n}` : ""}${p}.${doi}`;
