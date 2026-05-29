@@ -188,26 +188,18 @@ async function writeDocumentData(data: WordRefDocData): Promise<void> {
    2. OfficeRuntime.storage / localStorage fallback
    ========================================================= */
 
-async function readData(): Promise<WordRefDocData> {
-  const docData = await readDocumentData();
-
-  if (docData) {
-    await writeFallbackData(docData);
-    return docData;
+   async function readData(): Promise<WordRefDocData> {
+    const docData = await readDocumentData();
+  
+    if (docData) {
+      return docData;
+    }
+  
+    // Important:
+    // Do NOT seed a new document from fallback/global storage.
+    // Otherwise old libraries appear in new Word files.
+    return emptyData();
   }
-
-  const fallbackData = await readFallbackData();
-
-  // If document has no embedded data yet, seed it from fallback.
-  if (
-    Object.keys(fallbackData.library || {}).length > 0 ||
-    (fallbackData.citedOrder || []).length > 0
-  ) {
-    await writeDocumentData(fallbackData);
-  }
-
-  return fallbackData;
-}
 
 async function writeData(data: WordRefDocData): Promise<void> {
   const clean: WordRefDocData = {
@@ -221,117 +213,57 @@ async function writeData(data: WordRefDocData): Promise<void> {
   await writeDocumentData(clean);
 }
 
-/* =========================================================
-   Public API used by taskpane.ts
-   Keep these names unchanged.
-   ========================================================= */
 
-   function getSetting<T>(key: string, fallback: T): T {
 
-    try {
-  
-      const value = Office.context.document.settings.get(key);
-  
-      if (!value) return fallback;
-  
-      if (typeof value === "string") {
-  
-        return JSON.parse(value) as T;
-  
-      }
-  
-      return value as T;
-  
-    } catch {
-  
-      return fallback;
-  
-    }
-  
-  }
-  
-  function setSetting(key: string, value: unknown): Promise<void> {
-  
-    Office.context.document.settings.set(key, JSON.stringify(value));
-  
-    return new Promise((resolve, reject) => {
-  
-      Office.context.document.settings.saveAsync((result) => {
-  
-        if (result.status === Office.AsyncResultStatus.Succeeded) {
-  
-          resolve();
-  
-        } else {
-  
-          reject(result.error);
-  
-        }
-  
-      });
-  
-    });
-  
-  }
-  
   export async function getLibrary(): Promise<Record<string, BibEntry>> {
-  
-    return getSetting<Record<string, BibEntry>>(LIB_KEY, {});
-  
+    const data = await readData();
+    return data.library || {};
   }
   
   export async function saveLibrary(lib: Record<string, BibEntry>): Promise<void> {
-  
-    await setSetting(LIB_KEY, lib);
-  
+    const data = await readData();
+    data.library = lib || {};
+    await writeData(data);
   }
   
   export async function upsertEntry(entry: BibEntry): Promise<void> {
-  
-    const lib = await getLibrary();
-  
-    lib[entry.id] = entry;
-  
-    await saveLibrary(lib);
-  
+    const data = await readData();
+    data.library = data.library || {};
+    data.library[entry.id] = entry;
+    await writeData(data);
   }
   
   export async function clearLibrary(): Promise<void> {
-  
-    await saveLibrary({});
-  
+    const data = await readData();
+    data.library = {};
+    await writeData(data);
   }
   
   export async function getCitedOrder(): Promise<string[]> {
-  
-    return getSetting<string[]>(CITED_ORDER_KEY, []);
-  
+    const data = await readData();
+    return data.citedOrder || [];
   }
   
   export async function setCitedOrder(order: string[]): Promise<void> {
-  
-    await setSetting(CITED_ORDER_KEY, order);
-  
+    const data = await readData();
+    data.citedOrder = order || [];
+    await writeData(data);
   }
   
   export async function markCited(id: string): Promise<void> {
+    const data = await readData();
+    data.citedOrder = data.citedOrder || [];
   
-    const order = await getCitedOrder();
-  
-    if (!order.includes(id)) {
-  
-      order.push(id);
-  
-      await setCitedOrder(order);
-  
+    if (!data.citedOrder.includes(id)) {
+      data.citedOrder.push(id);
+      await writeData(data);
     }
-  
   }
   
   export async function clearCitedOrder(): Promise<void> {
-  
-    await setCitedOrder([]);
-  
+    const data = await readData();
+    data.citedOrder = [];
+    await writeData(data);
   }
 
 /* Optional: use only if you want to fully wipe WordReff from local fallback too */
