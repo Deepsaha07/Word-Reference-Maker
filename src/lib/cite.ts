@@ -27,44 +27,46 @@ async function ensureSelectionAtEnd(): Promise<void> {
 }
 
 function decodeLatex(value: string): string {
+  const accentMap: Record<string, Record<string, string>> = {
+    "'": {
+      a: "á", e: "é", i: "í", o: "ó", u: "ú", y: "ý",
+      A: "Á", E: "É", I: "Í", O: "Ó", U: "Ú", Y: "Ý",
+      c: "ć", C: "Ć",
+    },
+    "`": {
+      a: "à", e: "è", i: "ì", o: "ò", u: "ù",
+      A: "À", E: "È", I: "Ì", O: "Ò", U: "Ù",
+    },
+    '"': {
+      a: "ä", e: "ë", i: "ï", o: "ö", u: "ü", y: "ÿ",
+      A: "Ä", E: "Ë", I: "Ï", O: "Ö", U: "Ü",
+    },
+    "^": {
+      a: "â", e: "ê", i: "î", o: "ô", u: "û",
+      A: "Â", E: "Ê", I: "Î", O: "Ô", U: "Û",
+    },
+    "~": {
+      a: "ã", n: "ñ", o: "õ",
+      A: "Ã", N: "Ñ", O: "Õ",
+    },
+  };
+
   return String(value || "")
-    .replace(/\{\\'([A-Za-z])\}/g, (_, c) => {
-      const map: Record<string, string> = {
-        a: "á", e: "é", i: "í", o: "ó", u: "ú", y: "ý",
-        A: "Á", E: "É", I: "Í", O: "Ó", U: "Ú", Y: "Ý",
-        c: "ć", C: "Ć",
-      };
-      return map[c] || c;
+    // Handles C{\'e}dric, Chev{\'e}
+    .replace(/\{\\([`'"^~])([A-Za-z])\}/g, (_, accent, char) => {
+      return accentMap[accent]?.[char] || char;
     })
-    .replace(/\{\\"([A-Za-z])\}/g, (_, c) => {
-      const map: Record<string, string> = {
-        a: "ä", e: "ë", i: "ï", o: "ö", u: "ü", y: "ÿ",
-        A: "Ä", E: "Ë", I: "Ï", O: "Ö", U: "Ü",
-      };
-      return map[c] || c;
+
+    // Handles C\'edric
+    .replace(/\\([`'"^~])([A-Za-z])/g, (_, accent, char) => {
+      return accentMap[accent]?.[char] || char;
     })
-    .replace(/\{\\`([A-Za-z])\}/g, (_, c) => {
-      const map: Record<string, string> = {
-        a: "à", e: "è", i: "ì", o: "ò", u: "ù",
-        A: "À", E: "È", I: "Ì", O: "Ò", U: "Ù",
-      };
-      return map[c] || c;
-    })
-    .replace(/\{\\\^([A-Za-z])\}/g, (_, c) => {
-      const map: Record<string, string> = {
-        a: "â", e: "ê", i: "î", o: "ô", u: "û",
-        A: "Â", E: "Ê", I: "Î", O: "Ô", U: "Û",
-      };
-      return map[c] || c;
-    })
-    .replace(/\{\\~([A-Za-z])\}/g, (_, c) => {
-      const map: Record<string, string> = {
-        a: "ã", n: "ñ", o: "õ",
-        A: "Ã", N: "Ñ", O: "Õ",
-      };
-      return map[c] || c;
-    })
+
+    // Common BibTeX symbols
     .replace(/--/g, "–")
+    .replace(/\\&/g, "&")
+
+    // Remove remaining grouping braces
     .replace(/[{}]/g, "");
 }
 
@@ -86,13 +88,13 @@ export function formatBibliographyEntry(e: BibEntry, style: string, index: numbe
   const sty = normalizeStyle(style);
 
   const a = decodeLatex(e.fields.author || e.fields.editor || "Anon");
-  const y = decodeLatex(e.fields.year || "n.d.");
   const t = decodeLatex(e.fields.title || "");
   const j = decodeLatex(e.fields.journal || e.fields.booktitle || "");
+  const pagesRaw = decodeLatex(e.fields.pages || "");
+  const y = decodeLatex(e.fields.year || "n.d.");
   const v = decodeLatex(e.fields.volume ? `${e.fields.volume}` : "");
   const nRaw = decodeLatex(e.fields.number ? `${e.fields.number}` : "");
   const n = nRaw ? `(${nRaw})` : "";
-  const pagesRaw = decodeLatex(e.fields.pages || "");
   const p = pagesRaw ? `, ${pagesRaw}` : "";
   const doi = e.fields.doi ? ` https://doi.org/${decodeLatex(e.fields.doi)}` : "";
 
