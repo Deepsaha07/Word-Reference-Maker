@@ -175,11 +175,18 @@ export async function updateBibliography(
   style: string = "apa",
   opts?: BibFormatOptions
 ): Promise<void> {
-  // de-dup + sort for author-year styles
-  const seen = new Set<string>();
-  let list = entries.filter(e => !seen.has(e.id) && (seen.add(e.id), true));
+  const styleKey = (style || "apa").toLowerCase();
 
-  if (["apa", "harvard", "mla"].includes((style || "apa").toLowerCase())) {
+  // De-duplicate entries.
+  const seen = new Set<string>();
+  let list = entries.filter((e) => {
+    if (!e?.id || seen.has(e.id)) return false;
+    seen.add(e.id);
+    return true;
+  });
+
+  // Author-year styles usually use alphabetical bibliography order.
+  if (["apa", "harvard", "mla"].includes(styleKey)) {
     list = [...list].sort((a, b) =>
       (a.fields.author || "").localeCompare(b.fields.author || "")
     );
@@ -189,78 +196,69 @@ export async function updateBibliography(
     Office.context.platform === Office.PlatformType.OfficeOnline;
 
   await Word.run(async (ctx) => {
-    // ensure heading, then one CC
-    const heading = await (async () => {
-      const body = ctx.document.body;
-      const paras = body.paragraphs;
+    const body = ctx.document.body;
 
-      paras.load("items,text");
+    const paras = body.paragraphs;
+    paras.load("items/text");
+    await ctx.sync();
+
+    let heading = paras.items.find(
+      (p) => (p.text || "").trim().toLowerCase() === "references"
+    );
+
+    if (!heading) {
+      heading = body.insertParagraph("References", Word.InsertLocation.end);
+      heading.styleBuiltIn = Word.BuiltInStyleName.heading1;
+      body.insertParagraph("", Word.InsertLocation.end);
       await ctx.sync();
+    }
 
-      let h = paras.items.find(
-        p => p.text.trim().toLowerCase() === "references"
-      );
-
-      if (!h) {
-        h = body.insertParagraph("References", Word.InsertLocation.end);
-        h.styleBuiltIn = Word.BuiltInStyleName.heading1;
-        body.insertParagraph("", Word.InsertLocation.end);
-        await ctx.sync();
-      }
-
-      return h!;
-    })();
-
-    const bibCC = await getOrCreateBibCC(ctx, heading);
-
-    // Build full text once
-    const lines = list.map((e, i) =>
-      formatBibliographyEntry(e, style, i + 1)
+    const lines = list.map((entry, i) =>
+      formatBibliographyEntry(entry, styleKey, i + 1)
     );
 
     const bibText = lines.join("\n");
 
-    // Replace the whole CC with fresh text
+    // Word Web fallback:
+    // Do NOT use bibliography content controls or paragraph formatting in Word Web.
+    if (isWordWeb) {
+      const existingBib = body.search("__WORDREFF_WEB_BIB_START__", {
+        matchCase: true,
+        matchWholeWord: false,
+      });
+
+      existingBib.load("items");
+      await ctx.sync();
+
+      // Best simple fallback: append a clean text block.
+      // Avoid content controls because they cause Word Web range/index issues.
+      body.insertParagraph(bibText, Word.InsertLocation.end);
+      await ctx.sync();
+
+      console.warn(
+        "[WordReff] Word Web: bibliography inserted as plain text for compatibility."
+      );
+      return;
+    }
+
+    // Desktop Word path: keep the existing content-control bibliography.
+    const bibCC = await getOrCreateBibCC(ctx, heading);
+
     bibCC.insertText(bibText, Word.InsertLocation.replace);
     await ctx.sync();
 
-    // Word Web fallback:
-    // Avoid paragraph formatting inside content controls because it can throw
-    // Sys.ArgumentOutOfRangeException: Parameter name: index.
-    if (isWordWeb) {
-      const body = ctx.document.body;
-    
-      const paras = body.paragraphs;
-      paras.load("items/text");
-      await ctx.sync();
-    
-      let heading = paras.items.find(
-        p => (p.text || "").trim().toLowerCase() === "references"
-      );
-    
-      if (!heading) {
-        heading = body.insertParagraph("References", Word.InsertLocation.end);
-        body.insertParagraph("", Word.InsertLocation.end);
-        await ctx.sync();
-      }
-    
-      const bibText = lines.join("\n");
-    
-      body.insertParagraph(bibText, Word.InsertLocation.end);
-      await ctx.sync();
-    
-      console.warn("[WordReff] Word Web: bibliography inserted as plain text for compatibility.");
-      return;
-    }
-    // Desktop Word formatting path - unchanged behavior
     try {
       const rng = bibCC.getRange();
-      const paras = rng.paragraphs;
 
-      paras.load("items");
+      rng.font.name = opts?.fontName || "Times New Roman";
+      rng.font.size = opts?.fontSize || 12;
+      rng.font.color = opts?.color || "#333333";
+
+      const bibParas = rng.paragraphs;
+      bibParas.load("items");
       await ctx.sync();
 
-      for (const p of paras.items) {
+      for (const p of bibParas.items) {
         if (opts?.fontName) p.font.name = opts.fontName;
         if (opts?.fontSize !== undefined) p.font.size = opts.fontSize;
         if (opts?.color) p.font.color = opts.color;
@@ -272,8 +270,6 @@ export async function updateBibliography(
     } catch (err) {
       console.error("[WordReff] Bibliography formatting failed:", err);
     }
-
-    await ctx.sync();
   });
 }
 

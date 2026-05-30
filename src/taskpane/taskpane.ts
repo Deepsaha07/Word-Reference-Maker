@@ -1699,17 +1699,38 @@ async function onUnmergeSelectedCitation(): Promise<void> {
         // Create an empty CC; text will be set by rerenderAllCitations
         const ccRange = cursor.insertText("", Word.InsertLocation.after);
         if (Office.context.platform === Office.PlatformType.OfficeOnline) {
-          ccRange.insertText(formatInText(lib[id], style, order.indexOf(id) + 1), Word.InsertLocation.replace);
-        } else {
-          const cc = ccRange.insertContentControl();
-          cc.title = "WordReff Citation";
-          cc.tag = `wordreff-cite:${id}`;
-          cc.appearance = "BoundingBox";
-        }
-        //cc.title      = "WordReff Citation";
-       
 
-        cursor = nextCursor;
+          const entry = lib[id];
+        
+          const idx = Math.max(order.indexOf(id) + 1, 1);
+        
+          const text = entry ? formatInText(entry, style, idx) : "";
+        
+          const inserted = ccRange.insertText(text, Word.InsertLocation.replace);
+        
+          nextCursor = inserted.getRange("End");
+        
+        } else {
+        
+          const cc = ccRange.insertContentControl();
+        
+          cc.title = "WordReff Citation";
+        
+          cc.tag = `wordreff-cite:${id}`;
+        
+          cc.appearance = "BoundingBox";
+        
+          const entry = lib[id];
+        
+          const idx = Math.max(order.indexOf(id) + 1, 1);
+        
+          const text = entry ? formatInText(entry, style, idx) : "";
+        
+          cc.insertText(text, Word.InsertLocation.replace);
+        
+          nextCursor = cc.getRange("End");
+        
+        }
       }
 
       // Remove the old merged group completely
@@ -1988,7 +2009,7 @@ async function onMergeSelectedCitations(): Promise<void> {
   await guard("Merge selected citations", async () => {
     await Word.run(async (ctx) => {
       const selRange = ctx.document.getSelection(); // correct
-      const singles = ctx.document.contentControls.getByTitle("WordRef Citation");
+      const singles = ctx.document.contentControls.getByTitle("WordReff Citation");
       singles.load("items/tag,items/id");
       await ctx.sync();
 
